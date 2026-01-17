@@ -1,136 +1,101 @@
 #include "structures.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <strings.h>
 
-// External links to globals defined in main.c
-extern TreeNode* root;
-extern CourseNode* inventory;
-
-// --- 1. HELPER: Get Professor Name for a Course Code ---
-// This allows the professor check to work even if we only have the code in the grid
-char* get_prof_for_code(char* code) {
-    if (code == NULL) return "None";
-    CourseNode* curr = inventory;
-    while (curr != NULL) {
-        if (strcmp(curr->data.code, code) == 0) {
-            return curr->data.prof.name;
-        }
-        curr = curr->next;
-    }
-    return "None";
-}
-
-// --- 2. HELPER: Check if Subject is already on this Day ---
-bool is_subject_on_day(SectionTimetable* st, char* code, int day) {
-    for (int s = 0; s < MAX_SLOTS; s++) {
-        // Only look at the grid of the specific section passed to this function
-        if (st->grid[day][s] != NULL && strcmp(st->grid[day][s], code) == 0) {
-            return true;
-        }
+bool is_qualified(Professor* p, char* sub_code) {
+    for (int i = 0; i < p->expertise_count; i++) {
+        if (strcmp(p->expertise[i], sub_code) == 0) return true;
     }
     return false;
 }
 
-// --- 3. HELPER: Global Professor Conflict Check ---
-// Recursively searches the entire tree to see if a professor is teaching elsewhere
-bool is_professor_busy(TreeNode* node, char* prof_name, int day, int slot, int duration, TreeNode* target_section) {
-    if (node == NULL || strcmp(prof_name, "None") == 0) return false;
-
-    // Check if this node is a Section and NOT the one we are currently filling
-    if (node->timetable != NULL && node != target_section) {
-        for (int i = 0; i < duration; i++) {
-            int current_slot = slot + i;
-            if (current_slot >= MAX_SLOTS) continue;
-
-            char* code_in_grid = node->timetable->grid[day][current_slot];
-            if (code_in_grid != NULL) {
-                // Check if the professor assigned to the code in this slot matches
-                if (strcmp(get_prof_for_code(code_in_grid), prof_name) == 0) {
-                    return true; // Professor is busy in another section!
-                }
-            }
-        }
+bool is_teacher_busy(TreeNode* branch, char* name, int d, int s) {
+    if (!branch) return false;
+    if (branch->type == SECTION_NODE) {
+        if (branch->timetable->grid[d][s] && strstr(branch->timetable->grid[d][s], name)) return true;
     }
-
-    // Traverse the rest of the tree
-    for (int i = 0; i < 10; i++) {
-        if (node->children[i] != NULL) {
-            if (is_professor_busy(node->children[i], prof_name, day, slot, duration, target_section))
-                return true;
-        }
-    }
+    for (int i = 0; i < branch->child_count; i++)
+        if (is_teacher_busy(branch->children[i], name, d, s)) return true;
     return false;
 }
 
-// --- 4. CORE: Backtracking Solver ---
-bool solve_timetable(Queue* pending_reqs, StackNode** history) {
-    // Base Case: All requests handled
-    if (pending_reqs->front == NULL) return true;
+bool solve_branch_timetable(TreeNode* root, Queue* pipeline, SolverHistory* history) {
+    // Check if the pipeline is truly empty
+    if (pipeline == NULL || pipeline->front == NULL) return true;
 
-    // Get the next request from the queue
-    ScheduleRequest current = dequeue(pending_reqs);
-    SectionTimetable* st = current.target_section->timetable;
+    QueueNode* current = pipeline->front;
+    ScheduleRequest req = current->req;
+    
+    // Crucial: Find the branch node to access the Teacher Pool
+    TreeNode* branch = root->children[0]; 
+    BranchData* bd = branch->branch_info;
 
-    for (int d = 0; d < MAX_DAYS; d++) {
-        for (int s = 0; s <= MAX_SLOTS - current.duration; s++) {
-                if (s == 2 || s == 5) continue;
+    // Define available slots (Skipping 2 and 5 for Breaks)
+    int days[] = {0, 1, 2, 3, 4};
+    int slots[] = {0, 1, 3, 4, 6, 7}; 
 
-                // Check if a multi-hour class (like a Lab) would overlap into a break
-                // e.g., if a 2-hour lab starts at Index 1 (10:00), it would hit Index 2 (11:00)
-                bool overlaps_break = false;
-                for (int i = 0; i < current.duration; i++) {
-                    if ((s + i) == 2 || (s + i) == 5) {
-                        overlaps_break = true;
-                        break;
+    // Shuffle only once per recursion level to maintain variety
+    for (int i = 4; i > 0; i--) {
+        int j = rand() % (i + 1);
+        int temp = days[i]; days[i] = days[j]; days[j] = temp;
+    }
+
+    // Attempt to find a qualified teacher
+    for (int t = 0; t < bd->teacher_count; t++) {
+        Professor* p = &bd->teachers[t];
+
+        if (is_qualified(p, req.course_code)) {
+            for (int d_idx = 0; d_idx < 5; d_idx++) {
+                for (int s_idx = 0; s_idx < 6; s_idx++) {
+                    int d = days[d_idx];
+                    int s = slots[s_idx];
+
+                    if (req.target_section->timetable->grid[d][s] == NULL && 
+                        !is_teacher_busy(branch, p->name, d, s)) {
+                        
+                        char entry[100];
+                        sprintf(entry, "%s (%s)", req.course_code, p->name);
+                        req.target_section->timetable->grid[d][s] = strdup(entry);
+                        
+                        // MOVE TO NEXT SUBJECT
+                        pipeline->front = current->next;
+                        if (solve_branch_timetable(root, pipeline, history)) {
+                            return true; // Success path
+                        }
+
+                        // BACKTRACK: This path failed, clean up
+                        pipeline->front = current; 
+                        free(req.target_section->timetable->grid[d][s]);
+                        req.target_section->timetable->grid[d][s] = NULL;
                     }
                 }
-                if (overlaps_break) continue;
-            // LUNCH BREAK CONSTRAINT: Skip the 5th slot (Index 4)
-            // If the class starts at lunch or overlaps into lunch, skip it
-
-            if (s == 4 || (s < 4 && s + current.duration > 4)) continue;
-
-            // Check if slots are physically empty
-            bool slots_free = true;
-            for (int i = 0; i < current.duration; i++) {
-                if (st->grid[d][s + i] != NULL) {
-                    slots_free = false;
-                    break;
-                }
-            }
-
-            // Apply all constraints
-            if (slots_free && 
-                !is_subject_on_day(st, current.course_code, d) && 
-                !is_professor_busy(root, current.prof_name, d, s, current.duration, current.target_section)) {
-                
-                // 1. Assign to grid
-                for (int i = 0; i < current.duration; i++) {
-                    st->grid[d][s + i] = strdup(current.course_code);
-                }
-
-                // 2. Push to Stack (for backtracking)
-                Assignment move = {d, s, "", current.target_section};
-                strcpy(move.course_code, current.course_code);
-                push_assignment(history, move);
-
-                // 3. Recursive call for next request
-                if (solve_timetable(pending_reqs, history)) return true;
-
-                // 4. Backtrack: If path failed, undo the assignment
-                for (int i = 0; i < current.duration; i++) {
-                    if (st->grid[d][s + i] != NULL) {
-                        free(st->grid[d][s + i]);
-                        st->grid[d][s + i] = NULL;
-                    }
-                }
-                pop_assignment(history);
             }
         }
     }
+    return false; // This triggers the "Backtrack" to the previous subject
+}
 
-    // If no slot works, put request back and return failure to previous recursion level
-    // (In a more advanced queue, you'd re-enqueue at the front)
-    return false; 
+void display_section_timetable(TreeNode* root, char* b_name, char* sec_name) {
+    if (!root) return;
+
+    // Search for the section node regardless of branch/sem depth
+    if (root->type == SECTION_NODE && strcasecmp(root->name, sec_name) == 0) {
+        printf("\n=========================================");
+        printf("\n TIMETABLE FOR: %s", root->name);
+        printf("\n=========================================\n");
+        for(int d=0; d<MAX_DAYS; d++) {
+            printf("Day %d: ", d+1);
+            for(int s=0; s<MAX_SLOTS; s++) {
+                if (s == 2) printf("[SHORT BREAK] ");
+                else if (s == 5) printf("[LUNCH] ");
+                else printf("[%s] ", root->timetable->grid[d][s] ? root->timetable->grid[d][s] : "---");
+            }
+            printf("\n");
+        }
+        printf("=========================================\n");
+        return;
+    }
+
+    for (int i = 0; i < root->child_count; i++) {
+        display_section_timetable(root->children[i], b_name, sec_name);
+    }
 }

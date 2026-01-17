@@ -2,57 +2,47 @@
 #define STRUCTURES_H
 
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define MAX_DAYS 5
-#define MAX_SLOTS 10
-
-// Forward declaration
-struct TreeNode; 
+#define MAX_SLOTS 8      
+#define MAX_CHILDREN 20  
+#define MAX_EXPERTISE 5
 
 typedef struct {
     char name[50];
-    char code[10];
+    char expertise[MAX_EXPERTISE][10]; // List of subject codes they can teach
+    int expertise_count;
 } Professor;
 
 typedef struct {
-    char code[10];
-    Professor prof;
-    int lectures_per_week;
-    bool needs_lab;
-} Course;
-
-typedef struct CourseNode {
-    Course data;
-    struct CourseNode* next;
-} CourseNode;
+    char branch_name[50];
+    Professor teachers[50];
+    int teacher_count;
+} BranchData;
 
 typedef struct {
-    char section_name[10];
-    char* grid[MAX_DAYS][MAX_SLOTS];
+    char* grid[MAX_DAYS][MAX_SLOTS]; 
 } SectionTimetable;
+
+typedef enum { ROOT_COLLEGE, BRANCH_NODE, SEMESTER_NODE, SECTION_NODE } NodeType;
 
 typedef struct TreeNode {
     char name[50];
-    struct TreeNode* children[10];
+    NodeType type;
+    struct TreeNode* children[MAX_CHILDREN];
     int child_count;
-    SectionTimetable* timetable;
+    BranchData* branch_info;      
+    SectionTimetable* timetable;  
 } TreeNode;
 
-// Consistency Fix: Use 'target_section' in both
-typedef struct ScheduleRequest {
-    char course_code[10];
-    char prof_name[50]; // <--- Add this
-    int duration;
-    struct TreeNode* target_section;
-} ScheduleRequest;
-
 typedef struct {
-    int day;
-    int slot;
     char course_code[10];
-    struct TreeNode* target_section; 
-} Assignment;
-
+    char prof_name[50];
+    TreeNode* target_section;
+} ScheduleRequest;
 
 typedef struct QueueNode {
     ScheduleRequest req;
@@ -63,28 +53,26 @@ typedef struct {
     QueueNode *front, *rear;
 } Queue;
 
+typedef struct {
+    int subjects_placed;
+} SolverHistory;
 
-
-typedef struct StackNode {
-    Assignment move;
-    struct StackNode* next;
-} StackNode;
-
-#endif
-CourseNode* create_course_node(Course c);
-void append_course(CourseNode** head, Course c);
-
-TreeNode* create_tree_node(const char* name, bool is_section);
-
+// Function Prototypes remains the same but add_teacher_to_branch loses a parameter
+TreeNode* create_tree_node(const char* name, NodeType type);
+void add_child(TreeNode* parent, TreeNode* child);
 Queue* create_queue();
 void enqueue(Queue* q, ScheduleRequest req);
-ScheduleRequest dequeue(Queue* q); // The one that fixed your error!
+ScheduleRequest dequeue(Queue* q);
+TreeNode* add_branch_to_college(TreeNode* root, const char* name);
+TreeNode* add_semester_to_branch(TreeNode* branch, const char* name);
+TreeNode* add_section_to_semester(TreeNode* sem, const char* name);
+void add_teacher_to_branch(TreeNode* branch, char* name); // Removed 'load'
+void admin_wizard(TreeNode* root, Queue* pipeline);
+bool validate_teacher(TreeNode* b, char* name);
+bool is_teacher_busy(TreeNode* branch, char* name, int d, int s);
+bool solve_branch_timetable(TreeNode* root, Queue* pipeline, SolverHistory* history);
+void display_section_timetable(TreeNode* root, char* branch, char* section);
+void export_to_json(TreeNode* root, const char* filename);
+void get_teacher_view(TreeNode* node, char* name, char* parent_name);
 
-void push_assignment(StackNode** top, Assignment move);
-Assignment pop_assignment(StackNode** top);
-
-// Scheduling Logic
-bool solve_timetable(Queue* pending_reqs, StackNode** history);
-bool is_subject_on_day(SectionTimetable* tt, char* code, int day);
-
-void load_department_data(const char* filename, CourseNode** inventory, TreeNode** root);
+#endif

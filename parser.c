@@ -1,78 +1,89 @@
 #include "structures.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-void load_department_data(const char* filename, CourseNode** inventory, TreeNode** root_ptr) {
-    FILE* file = fopen(filename, "r");
-    if (!file) {
-        printf("ERROR: Could not open file %s\n", filename);
-        return;
+TreeNode* add_branch_to_college(TreeNode* root, const char* name) {
+    TreeNode* b = create_tree_node(name, BRANCH_NODE);
+    add_child(root, b);
+    return b;
+}
+
+TreeNode* add_semester_to_branch(TreeNode* b, const char* name) {
+    TreeNode* s = create_tree_node(name, SEMESTER_NODE);
+    add_child(b, s);
+    return s;
+}
+
+TreeNode* add_section_to_semester(TreeNode* s, const char* name) {
+    TreeNode* sec = create_tree_node(name, SECTION_NODE);
+    add_child(s, sec);
+    return sec;
+}
+
+// FIXED: Removed 'int load' to match structures.h
+void add_teacher_to_branch(TreeNode* b, char* name) {
+    if (!b || !b->branch_info) return;
+    BranchData* bd = b->branch_info;
+    if (bd->teacher_count < 50) {
+        strncpy(bd->teachers[bd->teacher_count].name, name, 49);
+        bd->teacher_count++;
     }
+}
 
-    int num_depts;
-    char buf[100];
-
-    // 1. Read Number of Departments and the Department Name (e.g., CS_Dept)
-    if (fscanf(file, "%d %s", &num_depts, buf) != 2) {
-        fclose(file);
-        return;
+bool validate_teacher(TreeNode* b, char* name) {
+    if (!b || !b->branch_info) return false;
+    for (int i = 0; i < b->branch_info->teacher_count; i++) {
+        if (strcmp(b->branch_info->teachers[i].name, name) == 0) return true;
     }
+    return false;
+}
 
-    // 2. Create the Root Node (The Department)
-    TreeNode* local_root = create_tree_node(buf, false);
-    if (!local_root) {
-        fclose(file);
-        return;
-    }
+void admin_wizard(TreeNode* root, Queue* pipeline) {
+    char name[50];
+    int t_count, s_count, sub_count, exp_count;
 
-    // 3. Create exactly 5 Section Nodes as children of the Root
-    // These are the only nodes that will have a 'timetable' grid
-    char* names[] = {"Section_A", "Section_B", "Section_C", "Section_D", "Section_E"};
-    for (int i = 0; i < 5; i++) {
-        TreeNode* sec_node = create_tree_node(names[i], true);
-        if (local_root->child_count < 10) {
-            local_root->children[local_root->child_count++] = sec_node;
+    printf("\n--- STEP 1: BRANCH ---\n");
+    printf("Enter Branch Name: "); scanf("%s", name);
+    TreeNode* b = add_branch_to_college(root, name);
+
+    printf("\n--- STEP 2: TEACHER EXPERTISE ---\n");
+    printf("How many teachers? "); scanf("%d", &t_count);
+    for (int i = 0; i < t_count; i++) {
+        printf("  Teacher %d Name: ", i + 1); scanf("%s", name);
+        add_teacher_to_branch(b, name); 
+        
+        // Get pointer to the teacher we just added to fill expertise
+        Professor* p = &b->branch_info->teachers[b->branch_info->teacher_count - 1];
+        
+        printf("  How many subjects can %s teach? ", name); scanf("%d", &exp_count);
+        p->expertise_count = exp_count;
+        for (int j = 0; j < exp_count; j++) {
+            printf("    Enter Expertise Subject Code %d: ", j + 1);
+            scanf("%s", p->expertise[j]);
         }
     }
 
-    // 4. Consume/Skip the placeholder structural lines in your text file
-    // These lines: "1 1 2", "1 2 1", "1 CS_Building", "DSA_Batch"
-    int d;
-    fscanf(file, "%d %d %d", &d, &d, &d); 
-    fscanf(file, "%d %d %d", &d, &d, &d);
-    fscanf(file, "%d %s %s", &d, buf, buf);
+    for (int s = 1; s <= 3; s++) {
+        printf("\n--- SEMESTER %d SETUP ---\n", s);
+        char sem_label[20]; sprintf(sem_label, "Semester_%d", s);
+        TreeNode* sem_node = add_semester_to_branch(b, sem_label);
 
-    // 5. Load the 4 Categories (CORE, LABS, MATHS, DTL)
-    // We only put the subjects into the Inventory (Linked List)
-    for (int i = 0; i < 4; i++) {
-        char cat_name[50];
-        int num_courses;
-        if (fscanf(file, "%s %d", cat_name, &num_courses) != 2) break;
+        printf("  Number of Sections: "); scanf("%d", &s_count);
+        TreeNode* sections[MAX_CHILDREN];
+        for (int i = 0; i < s_count; i++) {
+            sprintf(name, "Sec_%c", 'A' + i);
+            sections[i] = add_section_to_semester(sem_node, name);
+        }
 
-        for (int j = 0; j < num_courses; j++) {
-            int tut, lab, lec;
-            char prof[50];
-            if (fscanf(file, "%d %d %d %s", &tut, &lab, &lec, prof) != 4) break;
-
-            Course c;
-            c.needs_lab = (lab > 0);
-            c.lectures_per_week = lec;
-            strncpy(c.prof.name, prof, 49);
+        printf("  Number of Subjects for this Sem: "); scanf("%d", &sub_count);
+        for (int j = 0; j < sub_count; j++) {
+            char sub_code[10];
+            printf("    Subject %d Code: ", j + 1); scanf("%s", sub_code);
             
-            // Name subjects SUB1, SUB2... and labs LAB1, LAB2...
-            if (c.needs_lab) {
-                sprintf(c.code, "LAB%d", j + 1);
-            } else {
-                sprintf(c.code, "SUB%d", j + 1);
+            for (int i = 0; i < s_count; i++) {
+                ScheduleRequest req;
+                strcpy(req.course_code, sub_code);
+                req.target_section = sections[i];
+                enqueue(pipeline, req);
             }
-
-            append_course(inventory, c);
         }
     }
-
-    fclose(file);
-    *root_ptr = local_root; // Set the global root pointer
-    printf("DEBUG: Tree linked. Root: %s, Children: %d (Sections Created)\n", 
-            local_root->name, local_root->child_count);
 }
