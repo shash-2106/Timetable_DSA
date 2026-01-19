@@ -1,0 +1,39 @@
+{
+  "department": "Computer Science (CS)",
+  "sections": [
+    {
+      "section_name": "Sem3_SecA",
+      "data": [
+        ["OS (Prof. Turing)", "CN (Prof. Bell)", "BREAK", "DSA (Prof. Knuth)", "DSA (Prof. Knuth)", "LUNCH", "Maths (Prof. Raman)", "-"],
+        ["Java (Prof. Gosling)", "Java (Prof. Gosling)", "BREAK", "OS (Prof. Turing)", "CN (Prof. Bell)", "LUNCH", "Labs (Prof. Turing)", "Labs (Prof. Turing)"],
+        ["DSA (Prof. Knuth)", "Maths (Prof. Raman)", "BREAK", "CN (Prof. Bell)", "OS (Prof. Turing)", "LUNCH", "-", "-"],
+        ["Labs (Prof. Gosling)", "Labs (Prof. Gosling)", "BREAK", "Maths (Prof. Raman)", "DSA (Prof. Knuth)", "LUNCH", "CN (Prof. Bell)", "-"],
+        ["OS (Prof. Turing)", "Java (Prof. Gosling)", "BREAK", "-", "-", "LUNCH", "Activity", "Activity"]
+      ]
+    },
+    {
+      "section_name": "Sem3_SecB",
+      "data": [
+        ["Maths (Prof. Raman)", "DSA (Prof. Knuth)", "BREAK", "OS (Prof. Turing)", "OS (Prof. Turing)", "LUNCH", "CN (Prof. Bell)", "-"],
+        ["Labs (Prof. Bell)", "Labs (Prof. Bell)", "BREAK", "Java (Prof. Gosling)", "Maths (Prof. Raman)", "LUNCH", "DSA (Prof. Knuth)", "-"],
+        ["OS (Prof. Turing)", "CN (Prof. Bell)", "BREAK", "Java (Prof. Gosling)", "Java (Prof. Gosling)", "LUNCH", "-", "-"],
+        ["DSA (Prof. Knuth)", "Maths (Prof. Raman)", "BREAK", "Labs (Prof. Turing)", "Labs (Prof. Turing)", "LUNCH", "OS (Prof. Turing)", "-"],
+        ["CN (Prof. Bell)", "-", "BREAK", "Maths (Prof. Raman)", "DSA (Prof. Knuth)", "LUNCH", "Activity", "Activity"]
+      ]
+    },
+    {
+      "section_name": "Sem5_SecA",
+      "data": [
+        ["AI (Prof. Hinton)", "ML (Prof. Ng)", "BREAK", "Web (Prof. Berners)", "Web (Prof. Berners)", "LUNCH", "Python (Prof. Van)", "-"],
+        ["Cloud (Prof. Jeff)", "Cloud (Prof. Jeff)", "BREAK", "AI (Prof. Hinton)", "ML (Prof. Ng)", "LUNCH", "Labs (Prof. Hinton)", "Labs (Prof. Hinton)"],
+        ["Web (Prof. Berners)", "Python (Prof. Van)", "BREAK", "ML (Prof. Ng)", "AI (Prof. Hinton)", "LUNCH", "-", "-"],
+        ["Labs (Prof. Ng)", "Labs (Prof. Ng)", "BREAK", "Python (Prof. Van)", "Web (Prof. Berners)", "LUNCH", "ML (Prof. Ng)", "-"],
+        ["AI (Prof. Hinton)", "Cloud (Prof. Jeff)", "BREAK", "-", "-", "LUNCH", "Sports", "Sports"]
+      ]
+    }
+  ],
+  "ai_evaluation": {
+    "fatigue_score": 92,
+    "efficiency": "Optimal"
+  }
+}
