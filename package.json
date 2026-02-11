@@ -4,7 +4,7 @@
   "description": "University Timetable Scheduling System",
   "scripts": {
     "install:all": "cd backend && npm install && cd ../scheduler-frontend && npm install",
-    "build:c": "cd Timetable_DSA && gcc -o timetable_system main.c data_structures.c parser.c scheduler.c web_bridge.c -Wall -std=c99",
+    "build:c": "cd Timetable_DSA && gcc -o timetable_system main.c data_structures.c parser.c scheduler.c web_bridge.c -Wall -std=c99 -lm && chmod +x timetable_system",
     "build:frontend": "cd scheduler-frontend && npm run build",
     "build": "npm run build:c && npm run build:frontend",
     "start": "cd backend && node server.js",

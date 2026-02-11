@@ -56,16 +56,22 @@ app.post('/api/run-engine', (req, res) => {
     }
 
     // Run C Engine
+    console.log(`>> [Server] Executing: "${exePath}" config.txt (cwd: ${C_FOLDER})`);
+    console.log(`>> [Server] Binary exists: ${fs.existsSync(exePath)}`);
     exec(`"${exePath}" config.txt`, { cwd: C_FOLDER }, (error, stdout, stderr) => {
         if (error) {
             console.error(`   [x] Exec Error: ${error.message}`);
+            console.error(`   [x] Exit Code: ${error.code}`);
+            console.error(`   [x] Signal: ${error.signal}`);
+            console.error(`   [x] stdout: ${stdout}`);
+            console.error(`   [x] stderr: ${stderr}`);
             if (error.code === 1) {
                 return res.status(422).json({
                     success: false,
                     error: "Scheduling Failed: Not enough free slots or hard constraint violation."
                 });
             }
-            return res.status(500).json({ error: "C Engine crashed", details: stderr });
+            return res.status(500).json({ error: "C Engine crashed", details: stderr || error.message });
         }
 
         console.log("   [✓] C Engine finished.");
