@@ -271,9 +271,8 @@ void load_locks(TreeNode *root, const char *filename) {
         printf(">> [Locks] SKIP invalid bounds: d=%d s=%d\n", d, s);
         continue;
       }
-      printf(">> [Locks] Processing lock: %s | %s | %s (d=%d, s=%d)\n", branch,
-             sem, sec, d, s);
-      fflush(stdout);
+      // printf(">> [Locks] Processing lock: %s | %s | %s (d=%d, s=%d)\n",
+      // branch, sem, sec, d, s);
 
       // Unescape \n back to newline if needed, but our json_safe handles it.
       // Actually, we stored it as "\n" literal in file.

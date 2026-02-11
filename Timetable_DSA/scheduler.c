@@ -3,9 +3,6 @@
 #include <time.h>
 
 bool is_qualified(Professor *p, char *sub_code) {
-  printf(">> [Check] Qualified? %s for %s (exp_count=%d)\n", p->name, sub_code,
-         p->expertise_count);
-  fflush(stdout);
   for (int i = 0; i < p->expertise_count; i++) {
     if (i >= 30)
       break; // Safety
@@ -18,8 +15,6 @@ bool is_qualified(Professor *p, char *sub_code) {
 bool is_teacher_busy(TreeNode *branch, char *name, int d, int s) {
   if (!branch)
     return false;
-  printf(">> [Check] Busy? %s at %s (%d, %d)\n", name, branch->name, d, s);
-  fflush(stdout);
 
   if (branch->type == SECTION_NODE) {
     if (!branch->timetable) {
