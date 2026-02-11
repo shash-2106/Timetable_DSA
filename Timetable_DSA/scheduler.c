@@ -75,6 +75,13 @@ bool solve_branch_timetable(TreeNode *root, Queue *pipeline,
 
   ScheduleRequest *reqs =
       (ScheduleRequest *)malloc(total * sizeof(ScheduleRequest));
+  if (!reqs) {
+    printf(">> [Solver] CRITICAL: Failed to allocate requests array\n");
+    return false;
+  }
+  printf(">> [Solver] Allocated requests array at %p\n", (void *)reqs);
+  fflush(stdout);
+
   QueueNode *qn = pipeline->front;
   for (int i = 0; i < total; i++) {
     reqs[i] = qn->req;
@@ -88,8 +95,13 @@ bool solve_branch_timetable(TreeNode *root, Queue *pipeline,
   int max_placements = total * 2; /* labs occupy 2 slots each */
   Placement *undo_stack =
       (Placement *)malloc(max_placements * sizeof(Placement));
-  printf(">> [Solver] Allocated undo stack for %d placements.\n",
-         max_placements);
+  if (!undo_stack) {
+    printf(">> [Solver] CRITICAL: Failed to allocate undo stack\n");
+    free(reqs);
+    return false;
+  }
+  printf(">> [Solver] Allocated undo stack at %p (size %d)\n",
+         (void *)undo_stack, max_placements);
   fflush(stdout);
 
   /* Usable slot indices (breaks at 2 and 5 are skipped) */
@@ -109,12 +121,21 @@ bool solve_branch_timetable(TreeNode *root, Queue *pipeline,
     bool failed = false;
 
     /* ── 2a. Fisher–Yates shuffle the requests ── */
+    printf(">> [Solver] Shuffling %d requests...\n", total);
+    fflush(stdout);
     for (int i = total - 1; i > 0; i--) {
       int j = rand() % (i + 1);
+      // Detailed check for first shuffle
+      if (attempt == 0 && i == total - 1) {
+        printf(">> [Solver] First shuffle swap: i=%d j=%d\n", i, j);
+        fflush(stdout);
+      }
       ScheduleRequest tmp = reqs[i];
       reqs[i] = reqs[j];
       reqs[j] = tmp;
     }
+    printf(">> [Solver] Shuffle done.\n");
+    fflush(stdout);
 
     /* ── 2b. Greedy placement pass ── */
     for (int r = 0; r < total && !failed; r++) {
