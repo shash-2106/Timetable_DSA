@@ -339,6 +339,18 @@ void prune_pipeline(TreeNode *root, Queue *pipeline) {
            req.target_section->name);
     fflush(stdout);
 
+    // Verify target section and timetable exist
+    if (!req.target_section) {
+      printf(">> [Pruner] SKIP: Request for %s has NULL target_section\n",
+             req.course_code);
+      continue;
+    }
+    if (!req.target_section->timetable) {
+      printf(">> [Pruner] SKIP: Section %s has NULL timetable\n",
+             req.target_section->name);
+      continue;
+    }
+
     // Scan the grid of the target section
     for (int d = 0; d < MAX_DAYS; d++) {
       for (int s = 0; s < MAX_SLOTS; s++) {
@@ -467,12 +479,12 @@ void prune_pipeline(TreeNode *root, Queue *pipeline) {
     // Static array of structs { Section*, Subject[50], Count } to track DROPPED
     // count. Max combinations is roughly Semesters * Sections * Subjects ~ 50.
 
-    static struct {
+    struct {
       TreeNode *sec;
       char sub[50];
       int dropped;
     } drop_history[500];
-    static int h_count = 0;
+    int h_count = 0;
 
     // Find existing history
     int h_idx = -1;
@@ -485,10 +497,16 @@ void prune_pipeline(TreeNode *root, Queue *pipeline) {
     }
     if (h_idx == -1) {
       h_idx = h_count++;
+      // Bounds check for history array
+      if (h_count >= 500)
+        h_count = 499;
+
       drop_history[h_idx].sec = req.target_section;
       strcpy(drop_history[h_idx].sub, req.course_code);
       drop_history[h_idx].dropped = 0;
     }
+
+    QueueNode *next_temp = current->next; // Save next pointer here
 
     if (drop_history[h_idx].dropped < locks) {
       // Drop this request (it matches a lock)
@@ -503,13 +521,10 @@ void prune_pipeline(TreeNode *root, Queue *pipeline) {
         new_rear->next = current;
         new_rear = current;
       }
-      // Sever the link to old next to be safe (will be overwritten if loop
-      // continues, but good practice) But we must save current->next first.
+      current->next = NULL;
     }
 
-    QueueNode *next_node = current->next;
-    current->next = NULL; // Safe
-    current = next_node;
+    current = next_temp;
   }
 
   pipeline->front = new_front;
