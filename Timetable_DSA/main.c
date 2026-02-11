@@ -114,11 +114,19 @@ int main(int argc, char *argv[]) {
     }
 
     printf(">> [System] CLI Mode Enabled. Loading config: %s\n", argv[1]);
+    fflush(stdout);
     load_from_file(college_root, pipeline, argv[1]);
+    printf(">> [System] load_from_file DONE\n");
+    fflush(stdout);
 
     // NEW: Load existing locks and remove satisfied requests
     load_locks(college_root, "locked.txt");
+    printf(">> [System] load_locks DONE\n");
+    fflush(stdout);
+
     prune_pipeline(college_root, pipeline);
+    printf(">> [System] prune_pipeline DONE. Starting solver...\n");
+    fflush(stdout);
 
     if (solve_branch_timetable(college_root, pipeline, &history)) {
       printf("\n>> [Solver] Successfully generated all timetables.\n");

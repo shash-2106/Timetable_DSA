@@ -1,5 +1,6 @@
 #include "structures.h"
 #include <strings.h>
+#include <time.h>
 
 bool is_qualified(Professor *p, char *sub_code) {
   for (int i = 0; i < p->expertise_count; i++) {
@@ -23,16 +24,41 @@ bool is_teacher_busy(TreeNode *branch, char *name, int d, int s) {
   return false;
 }
 
+/*
+ * ITERATIVE GREEDY SOLVER with Placement Undo Stack
+ *
+ * DSA used:
+ *   - Queue (linked list):  scheduling requests are consumed from the pipeline
+ *   - Tree traversal:       is_teacher_busy walks the college tree
+ *   - Stack (undo_stack):   heap-allocated LIFO stack tracks every slot
+ *                           the solver fills, so a failed attempt can be
+ *                           rolled back in O(n) without recursion
+ *
+ * Algorithm:
+ *   1. Drain the Queue into an array for random-access shuffling.
+ *   2. For each attempt (up to MAX_ATTEMPTS):
+ *      a. Fisher–Yates shuffle the request array for variety.
+ *      b. Greedily place each request (first valid teacher × day × slot).
+ *      c. If every request is placed → success.
+ *      d. Otherwise, pop the undo stack (LIFO) to clear all placements
+ *         made during this attempt and try again.
+ *   3. Return false if all attempts exhausted.
+ */
+
+/* Single placement record pushed onto the undo stack */
+typedef struct {
+  TreeNode *section;
+  int day;
+  int slot;
+} Placement;
+
 bool solve_branch_timetable(TreeNode *root, Queue *pipeline,
                             SolverHistory *history) {
-  // Check if the pipeline is truly empty
-  if (pipeline == NULL || pipeline->front == NULL)
+  /* Nothing to schedule */
+  if (!pipeline || !pipeline->front)
     return true;
 
-  QueueNode *current = pipeline->front;
-  ScheduleRequest req = current->req;
-
-  // Crucial: Find the branch node to access the Teacher Pool
+  /* Navigate to the branch node (Tree traversal) */
   if (root->child_count == 0 || root->children[0] == NULL)
     return false;
   TreeNode *branch = root->children[0];
@@ -40,96 +66,147 @@ bool solve_branch_timetable(TreeNode *root, Queue *pipeline,
     return false;
   BranchData *bd = branch->branch_info;
 
-  // Define available slots (Skipping 2 and 5 for Breaks)
-  int days[] = {0, 1, 2, 3, 4};
-  int slots[] = {0, 1, 3, 4, 6, 7};
+  /* ── 1. Drain the Queue into an array ── */
+  int total = 0;
+  for (QueueNode *qn = pipeline->front; qn; qn = qn->next)
+    total++;
+  if (total == 0)
+    return true;
 
-  // Shuffle only once per recursion level to maintain variety
-  for (int i = 4; i > 0; i--) {
-    int j = rand() % (i + 1);
-    int temp = days[i];
-    days[i] = days[j];
-    days[j] = temp;
+  ScheduleRequest *reqs =
+      (ScheduleRequest *)malloc(total * sizeof(ScheduleRequest));
+  QueueNode *qn = pipeline->front;
+  for (int i = 0; i < total; i++) {
+    reqs[i] = qn->req;
+    qn = qn->next;
   }
 
-  // Attempt to find a qualified teacher
-  for (int t = 0; t < bd->teacher_count; t++) {
-    Professor *p = &bd->teachers[t];
+  printf(">> [Solver] %d requests to place. Iterative greedy solver.\n", total);
+  fflush(stdout);
 
-    if (is_qualified(p, req.course_code)) {
-      for (int d_idx = 0; d_idx < 5; d_idx++) {
-        for (int s_idx = 0; s_idx < 6; s_idx++) {
-          int d = days[d_idx];
-          int s = slots[s_idx];
+  /* ── 2. Allocate the Undo Stack (heap) ── */
+  int max_placements = total * 2; /* labs occupy 2 slots each */
+  Placement *undo_stack =
+      (Placement *)malloc(max_placements * sizeof(Placement));
 
-          // DEBUG: Check slot status
+  /* Usable slot indices (breaks at 2 and 5 are skipped) */
+  int avail_slots[] = {0, 1, 3, 4, 6, 7};
 
-          // CHECK LAB CONSTRAINT: Needs 2 consecutive slots
-          bool is_lab = (strcasecmp(req.type, "Lab") == 0);
+  srand((unsigned)time(NULL));
 
-          if (is_lab) {
-            // Labs cannot start at last slot of a block (1, 4, 7) because next
-            // is break/end Valid starts: 0 (0-1), 3 (3-4), 6 (6-7) Invalid
-            // starts: 1, 4, 7
-            if (s == 1 || s == 4 || s == 7)
-              continue;
+#define MAX_ATTEMPTS 30
+  bool success = false;
 
-            // Check if BOTH slots are free
-            // Slot s and s+1
-            int s_next = s + 1;
+  for (int attempt = 0; attempt < MAX_ATTEMPTS && !success; attempt++) {
+    int undo_top = 0; /* stack pointer */
+    bool failed = false;
 
-            if (req.target_section->timetable->grid[d][s] == NULL &&
-                req.target_section->timetable->grid[d][s_next] == NULL &&
-                !is_teacher_busy(branch, p->name, d, s) &&
-                !is_teacher_busy(branch, p->name, d, s_next)) {
+    /* ── 2a. Fisher–Yates shuffle the requests ── */
+    for (int i = total - 1; i > 0; i--) {
+      int j = rand() % (i + 1);
+      ScheduleRequest tmp = reqs[i];
+      reqs[i] = reqs[j];
+      reqs[j] = tmp;
+    }
 
-              char entry[100];
-              sprintf(entry, "%s (%s)\n%s", req.course_code, req.type, p->name);
+    /* ── 2b. Greedy placement pass ── */
+    for (int r = 0; r < total && !failed; r++) {
+      ScheduleRequest req = reqs[r];
+      bool placed = false;
+      bool is_lab = (strcasecmp(req.type, "Lab") == 0);
 
-              // Assign BOTH slots
-              req.target_section->timetable->grid[d][s] = strdup(entry);
-              req.target_section->timetable->grid[d][s_next] = strdup(entry);
+      /* Shuffle days per request for variety */
+      int days[] = {0, 1, 2, 3, 4};
+      for (int i = 4; i > 0; i--) {
+        int j = rand() % (i + 1);
+        int t = days[i];
+        days[i] = days[j];
+        days[j] = t;
+      }
 
-              pipeline->front = current->next;
-              if (solve_branch_timetable(root, pipeline, history)) {
-                return true;
+      /* Try every qualified teacher × shuffled day × slot */
+      for (int t = 0; t < bd->teacher_count && !placed; t++) {
+        Professor *p = &bd->teachers[t];
+        if (!is_qualified(p, req.course_code))
+          continue;
+
+        for (int di = 0; di < 5 && !placed; di++) {
+          for (int si = 0; si < 6 && !placed; si++) {
+            int d = days[di];
+            int s = avail_slots[si];
+
+            if (is_lab) {
+              /* Labs need 2 consecutive slots; skip invalid start positions */
+              if (s == 1 || s == 4 || s == 7)
+                continue;
+              int sn = s + 1;
+
+              if (req.target_section->timetable->grid[d][s] == NULL &&
+                  req.target_section->timetable->grid[d][sn] == NULL &&
+                  !is_teacher_busy(branch, p->name, d, s) &&
+                  !is_teacher_busy(branch, p->name, d, sn)) {
+
+                char entry[100];
+                sprintf(entry, "%s (%s)\n%s", req.course_code, req.type,
+                        p->name);
+
+                req.target_section->timetable->grid[d][s] = strdup(entry);
+                req.target_section->timetable->grid[d][sn] = strdup(entry);
+
+                /* Push BOTH slots onto undo stack (LIFO) */
+                undo_stack[undo_top++] = (Placement){req.target_section, d, s};
+                undo_stack[undo_top++] = (Placement){req.target_section, d, sn};
+                placed = true;
               }
+            } else {
+              /* Normal 1-hour lecture */
+              if (req.target_section->timetable->grid[d][s] == NULL &&
+                  !is_teacher_busy(branch, p->name, d, s)) {
 
-              // Backtrack BOTH
-              pipeline->front = current;
-              free(req.target_section->timetable->grid[d][s]);
-              req.target_section->timetable->grid[d][s] = NULL;
+                char entry[100];
+                sprintf(entry, "%s (%s)\n%s", req.course_code, req.type,
+                        p->name);
+                req.target_section->timetable->grid[d][s] = strdup(entry);
 
-              free(req.target_section->timetable->grid[d][s_next]);
-              req.target_section->timetable->grid[d][s_next] = NULL;
-            }
-
-          } else {
-            // NORMAL LECTURE (1 Hour)
-            if (req.target_section->timetable->grid[d][s] == NULL &&
-                !is_teacher_busy(branch, p->name, d, s)) {
-
-              char entry[100];
-              sprintf(entry, "%s (%s)\n%s", req.course_code, req.type, p->name);
-              req.target_section->timetable->grid[d][s] = strdup(entry);
-
-              // MOVE TO NEXT SUBJECT
-              pipeline->front = current->next;
-              if (solve_branch_timetable(root, pipeline, history)) {
-                return true; // Success path
+                /* Push onto undo stack */
+                undo_stack[undo_top++] = (Placement){req.target_section, d, s};
+                placed = true;
               }
-
-              // BACKTRACK: This path failed, clean up
-              pipeline->front = current;
-              free(req.target_section->timetable->grid[d][s]);
-              req.target_section->timetable->grid[d][s] = NULL;
             }
           }
         }
       }
+
+      if (!placed)
+        failed = true;
+    }
+
+    /* ── 2c / 2d. Check result ── */
+    if (!failed) {
+      success = true;
+      history->subjects_placed = total;
+      printf(">> [Solver] Success on attempt %d/%d!\n", attempt + 1,
+             MAX_ATTEMPTS);
+      fflush(stdout);
+    } else {
+      /* Pop the entire undo stack (LIFO rollback) */
+      for (int i = undo_top - 1; i >= 0; i--) {
+        Placement pl = undo_stack[i];
+        free(pl.section->timetable->grid[pl.day][pl.slot]);
+        pl.section->timetable->grid[pl.day][pl.slot] = NULL;
+      }
     }
   }
-  return false; // This triggers the "Backtrack" to the previous subject
+
+  free(undo_stack);
+  free(reqs);
+
+  if (!success) {
+    printf(">> [Solver] Failed after %d attempts.\n", MAX_ATTEMPTS);
+    fflush(stdout);
+  }
+
+  return success;
 }
 
 void display_section_timetable(TreeNode *root, char *b_name, char *sec_name) {

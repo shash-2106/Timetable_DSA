@@ -149,13 +149,7 @@ void load_from_file(TreeNode *root, Queue *pipeline, const char *filename) {
   fflush(stdout);
 
   for (int i = 0; i < t_count; i++) {
-    printf(">> [Loader] Reading teacher %d/%d...\n", i + 1, t_count);
-    fflush(stdout);
-
     fscanf(f, "%99s", name);
-    printf(">> [Loader]   Name: %s\n", name);
-    fflush(stdout);
-
     add_teacher_to_branch(b, name);
 
     // Safety check: ensure we actually added a teacher
@@ -165,14 +159,10 @@ void load_from_file(TreeNode *root, Queue *pipeline, const char *filename) {
     Professor *p = &b->branch_info->teachers[b->branch_info->teacher_count - 1];
 
     fscanf(f, "%d", &exp_count);
-    printf(">> [Loader]   Expertise count: %d\n", exp_count);
-    fflush(stdout);
-
     if (exp_count > MAX_EXPERTISE) {
-      printf(">> [Loader] WARNING: Teacher %s has %d expertise entries, "
-             "capping at %d\n",
-             name, exp_count, MAX_EXPERTISE);
-      fflush(stdout);
+      printf(
+          ">> [Loader] WARNING: Teacher %s has %d expertise, capping at %d\n",
+          name, exp_count, MAX_EXPERTISE);
     }
     int actual_exp = exp_count < MAX_EXPERTISE ? exp_count : MAX_EXPERTISE;
     p->expertise_count = actual_exp;
@@ -180,13 +170,10 @@ void load_from_file(TreeNode *root, Queue *pipeline, const char *filename) {
       if (j < MAX_EXPERTISE) {
         fscanf(f, "%49s", p->expertise[j]);
       } else {
-        // Read and discard excess expertise entries
         char discard[100];
         fscanf(f, "%99s", discard);
       }
     }
-    printf(">> [Loader]   Teacher %s loaded OK\n", name);
-    fflush(stdout);
   }
 
   // 3. Semesters
@@ -198,41 +185,28 @@ void load_from_file(TreeNode *root, Queue *pipeline, const char *filename) {
 
   for (int k = 0; k < sem_count_total; k++) {
     int sem_id, num_sections, num_courses;
-    // Format: Semester_ID Sections_Count Subject_Count
     fscanf(f, "%d %d %d", &sem_id, &num_sections, &num_courses);
-    printf(">> [Loader] Sem %d: id=%d, sections=%d, courses=%d\n", k + 1,
-           sem_id, num_sections, num_courses);
-    fflush(stdout);
 
     char sem_label[20];
     sprintf(sem_label, "Semester_%d", sem_id);
     TreeNode *sem_node = add_semester_to_branch(b, sem_label);
-    printf(">> [Loader]   Semester node created\n");
-    fflush(stdout);
 
     TreeNode *sections[MAX_CHILDREN];
     for (int i = 0; i < num_sections; i++) {
       sprintf(name, "Sec_%c", 'A' + i);
       sections[i] = add_section_to_semester(sem_node, name);
     }
-    printf(">> [Loader]   %d sections created\n", num_sections);
-    fflush(stdout);
 
     // Subjects
     for (int j = 0; j < num_courses; j++) {
       char sub_code[50];
       char sub_type[15];
       int hours;
-      // Format: SubjectCode Hours Type
       fscanf(f, "%49s %d %14s", sub_code, &hours, sub_type);
-      printf(">> [Loader]   Subject %d/%d: %s (%s) x%d hrs\n", j + 1,
-             num_courses, sub_code, sub_type, hours);
-      fflush(stdout);
 
       for (int i = 0; i < num_sections; i++) {
-        // FIX: Enqueue multiple requests based on 'hours'
         for (int h = 0; h < hours; h++) {
-          ScheduleRequest req;
+          ScheduleRequest req = {0};
           strcpy(req.course_code, sub_code);
           strcpy(req.type, sub_type);
           req.target_section = sections[i];

@@ -1,10 +1,45 @@
 CS
-3
-Prof_A 1 Maths
-Prof_B 1 DBMS
-Prof_C 1 DBMS
-2
-1 3 1
+19
+M1 1 Maths
+M2 1 Maths
+M3 1 Maths
+CH1 1 Chem
+CH2 1 Chem
+CH3 1 Chem
+E1 1 ESC
+E2 1 ESC
+E3 1 ESC
+E4 1 ESC
+C1 5 PLC OS CN DBMS AI
+C2 5 PLC OS DSA CN DBMS
+C3 4 PLC DSA DBMS AI
+C4 4 PLC OS DBMS Cloud
+A1 2 ADLD TOC
+A2 1 ADLD
+A3 2 ADLD TOC
+C5 3 DSA CN Cloud
+EL1 1 Elective
+4
+1 5 6
 Maths 1 Lecture
-5 2 1
+Chem 1 Lecture
+Chem 2 Lab
+ESC 1 Lecture
+PLC 2 Lab
+PLC 1 Lecture
+3 4 6
+ADLD 1 Lecture
+OS 1 Lecture
+DSA 1 Lecture
+OS 2 Lab
+DSA 2 Lab
+ADLD 2 Lab
+5 3 4
+CN 1 Lecture
 DBMS 1 Lecture
+TOC 1 Lecture
+DBMS 2 Lab
+7 2 3
+AI 1 Lecture
+Cloud 1 Lecture
+Elective 1 Lecture
