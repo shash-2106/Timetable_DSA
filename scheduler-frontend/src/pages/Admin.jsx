@@ -238,12 +238,46 @@ const Admin = () => {
             const semesterNum = parseInt(semName.split('_')[1]);
             const sectionCount = semNode.children ? semNode.children.length : 0;
 
+            // Extract courses from grid cells of the FIRST section
+            // Format: "SubjectName (Type)\nTeacherName"
+            const courseMap = {}; // key: "SubjectName|Type" -> { name, type, hours, teachers: Set }
+            const firstSection = semNode.children && semNode.children[0];
+            if (firstSection && firstSection.grid) {
+              firstSection.grid.forEach(row => {
+                row.forEach(cell => {
+                  if (!cell || cell === "FREE" || cell === "BREAK" || cell === "LUNCH" || cell === "-") return;
+                  // Parse "SubjectName (Type)\nTeacherName"
+                  const parts = cell.split('\n');
+                  if (parts.length < 2) return;
+                  const match = parts[0].match(/^(.+?)\s*\((\w+)\)$/);
+                  if (!match) return;
+                  const subName = match[1].trim();
+                  const subType = match[2].trim();
+                  const teacher = parts[1].trim();
+                  const key = `${subName}|${subType}`;
+                  if (!courseMap[key]) {
+                    courseMap[key] = { name: subName, type: subType, hours: 0, teachers: new Set() };
+                  }
+                  courseMap[key].hours++;
+                  courseMap[key].teachers.add(teacher);
+                });
+              });
+            }
+
+            const courses = Object.values(courseMap).map(c => ({
+              id: Date.now() + Math.random(),
+              name: c.name,
+              type: c.type,
+              hours: c.hours || 4,
+              teachers: Array.from(c.teachers)
+            }));
+
             reconstructed.push({
               branch: branchName,
               semester: semesterNum,
               sections: sectionCount,
               cycle: semesterNum % 2 !== 0 ? 'Odd' : 'Even',
-              courses: []
+              courses
             });
           });
         });

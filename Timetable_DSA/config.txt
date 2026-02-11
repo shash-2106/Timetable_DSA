@@ -1,6 +1,10 @@
 CS
-1
+3
 Prof_A 1 Maths
-1
+Prof_B 1 DBMS
+Prof_C 1 DBMS
+2
 1 3 1
 Maths 1 Lecture
+5 2 1
+DBMS 1 Lecture
