@@ -27,9 +27,18 @@ bool is_teacher_busy(TreeNode *branch, char *name, int d, int s) {
       fflush(stdout);
       return false;
     }
-    if (branch->timetable->grid[d][s] &&
-        strstr(branch->timetable->grid[d][s], name))
-      return true;
+    if (branch->timetable) {
+      printf(">> [Check] Timetable ptr: %p\n", (void *)branch->timetable);
+      fflush(stdout);
+      char *cell = branch->timetable->grid[d][s];
+      printf(">> [Check] Grid ptr: %p\n", (void *)cell);
+      fflush(stdout);
+      if (cell && strstr(cell, name))
+        return true;
+    }
+    // if (branch->timetable->grid[d][s] &&
+    //     strstr(branch->timetable->grid[d][s], name))
+    //   return true;
   }
   for (int i = 0; i < branch->child_count; i++) {
     if (i >= 20)
