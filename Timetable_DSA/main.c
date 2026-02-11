@@ -52,6 +52,65 @@ int main(int argc, char *argv[]) {
       } else {
         return result; // 1, 2, or 3
       }
+    } else if (strcmp(argv[1], "check_slot") == 0) {
+      // Same parsing as validate, but NO export
+      if (argc < 12) {
+        fprintf(stderr, "Invalid arguments for check_slot.\n");
+        return 3;
+      }
+
+      load_from_file(college_root, pipeline, argv[2]);
+      load_locks(college_root, argv[3]);
+
+      char *branch = argv[4];
+      char *sem = argv[5];
+      char *sec = argv[6];
+      int day = atoi(argv[7]);
+      int slot = atoi(argv[8]);
+      char *sub = argv[9];
+      char *type = argv[10];
+      char *teacher = argv[11];
+
+      TreeNode *b_node = find_child_by_name(college_root, branch, BRANCH_NODE);
+      TreeNode *s_node =
+          b_node ? find_child_by_name(b_node, sem, SEMESTER_NODE) : NULL;
+      TreeNode *sec_node =
+          s_node ? find_child_by_name(s_node, sec, SECTION_NODE) : NULL;
+
+      if (!sec_node) {
+        fprintf(stderr, "Target section not found.\n");
+        return 3;
+      }
+
+      // Perform Validation (this updates memory, but we won't save it)
+      int result = validate_and_assign_temporary_slot(
+          college_root, sec_node, sub, type, teacher, day, slot);
+
+      if (result == 0) {
+        printf("Valid\n"); // Just print Valid, don't export
+        return 0;
+      } else {
+        return result;
+      }
+    } else if (strcmp(argv[1], "check_availability") == 0) {
+      if (argc < 7) {
+        fprintf(stderr, "Invalid arguments for check_availability.\n");
+        return 3;
+      }
+
+      load_from_file(college_root, pipeline, argv[2]);
+      load_locks(college_root, argv[3]);
+
+      char *teacher = argv[4];
+      int day = atoi(argv[5]);
+      int slot = atoi(argv[6]);
+
+      // Directly check global availability
+      if (is_teacher_busy(college_root, teacher, day, slot)) {
+        return 2; // Busy
+      } else {
+        return 0; // Free
+      }
     }
 
     printf(">> [System] CLI Mode Enabled. Loading config: %s\n", argv[1]);

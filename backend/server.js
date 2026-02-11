@@ -12,6 +12,20 @@ app.use(express.json()); // To parse JSON bodies
 // PATHS (Adjust if your folder names are different)
 const C_FOLDER = path.join(__dirname, '../Timetable_DSA');
 const REACT_PUBLIC = path.join(__dirname, '../scheduler-frontend/public');
+const DAILY_OVERRIDES_FILE = path.join(__dirname, 'daily_overrides.json');
+
+// Initialize Daily Overrides if not exists
+if (!fs.existsSync(DAILY_OVERRIDES_FILE)) {
+    fs.writeFileSync(DAILY_OVERRIDES_FILE, JSON.stringify([]));
+}
+
+// Helper: Get Day Index from Date (0=Mon, 4=Fri)
+const getDayIndex = (dateString) => {
+    const date = new Date(dateString);
+    const day = date.getDay(); // 0=Sun, 1=Mon...
+    if (day === 0 || day === 6) return -1; // Weekend
+    return day - 1; // Mon=0, Fri=4
+};
 
 app.post('/api/run-engine', (req, res) => {
     console.log(">> Received Timetable Configuration...");
@@ -123,5 +137,130 @@ app.post('/api/book-slot', async (req, res) => {
     });
 });
 
+
+// NEW: Book Extra Slot (Date Specific)
+app.post('/api/book-extra-slot', async (req, res) => {
+    const { date, branch, sem, section, slot, subject, type, teacher, requester } = req.body;
+    const dayIndex = getDayIndex(date);
+
+    if (dayIndex === -1) return res.status(400).json({ error: "Cannot book on Weekends." });
+
+    console.log(`>> [Extra Slot Request] ${date} (D${dayIndex}) S${slot} : ${subject} (${teacher})`);
+
+    // 1. Check Daily Overrides for collisions
+    let overrides = [];
+    try {
+        overrides = JSON.parse(fs.readFileSync(DAILY_OVERRIDES_FILE));
+    } catch (e) { overrides = []; }
+
+    const conflict = overrides.find(o =>
+        o.date === date &&
+        o.branch === branch &&
+        o.sem === sem &&
+        o.section === section &&
+        o.slot === slot
+    );
+
+    if (conflict) {
+        return res.status(409).json({ error: `Slot already booked by ${conflict.requester} for ${conflict.subject}` });
+    }
+
+    // 2. Run C Validation (Master Schedule Check) using 'check_slot'
+    const exeName = process.platform === 'win32' ? 'timetable_system.exe' : 'timetable_system';
+    const exePath = path.join(C_FOLDER, exeName);
+
+    // Ensure locks are up to date
+    try {
+        await new Promise((resolve, reject) => exec('node ../extract_locks.js', { cwd: __dirname }, (err) => err ? reject(err) : resolve()));
+    } catch (e) { return res.status(500).json({ error: "Lock Sync Failed" }); }
+
+    // Command: check_slot config.txt locked.txt <args...>
+    const cmd = `"${exePath}" check_slot config.txt locked.txt "${branch}" "${sem}" "${section}" ${dayIndex} ${slot} "${subject}" "${type}" "${teacher}"`;
+
+    exec(cmd, { cwd: C_FOLDER }, (error, stdout, stderr) => {
+        if (error) {
+            if (error.code === 1) return res.status(409).json({ success: false, error: "Slot is NOT FREE in Master Schedule." });
+            if (error.code === 2) return res.status(409).json({ success: false, error: `Teacher ${teacher} is BUSY in Master Schedule.` });
+            if (error.code === 3) return res.status(400).json({ success: false, error: "Invalid Slot (Break) or Parameters." });
+            return res.status(500).json({ error: "Internal Error", details: stderr });
+        }
+
+        // 3. Success -> Save to Daily Overrides
+        const newOverride = {
+            id: Date.now(),
+            date, branch, sem, section, day: dayIndex, slot, subject, type, teacher, requester,
+            timestamp: new Date().toISOString()
+        };
+
+        overrides.push(newOverride);
+        fs.writeFileSync(DAILY_OVERRIDES_FILE, JSON.stringify(overrides, null, 2));
+
+        res.json({ success: true, message: "Extra Slot Booked Successfully!" });
+    });
+});
+
+// NEW: Swap Request (Atomic)
+app.post('/api/swap-request', async (req, res) => {
+    const { date, branch, sem, section, slotA, teacherA, slotB, teacherB, subjectA, subjectB, requester } = req.body;
+    const dayIndex = getDayIndex(date);
+
+    if (dayIndex === -1) return res.status(400).json({ error: "Cannot swap on Weekends." });
+
+    console.log(`>> [Swap Request] ${date}: ${teacherA} (S${slotA}) <-> ${teacherB} (S${slotB})`);
+
+    // 1. Validation: Is Teacher A free at Slot B? Is Teacher B free at Slot A?
+    // We strictly check the Master Schedule via C Engine.
+
+    const exeName = process.platform === 'win32' ? 'timetable_system.exe' : 'timetable_system';
+    const exePath = path.join(C_FOLDER, exeName);
+
+    // Ensure locks are up to date
+    try { await new Promise((resolve, reject) => exec('node ../extract_locks.js', { cwd: __dirname }, (err) => err ? reject(err) : resolve())); }
+    catch (e) { return res.status(500).json({ error: "Lock Sync Failed" }); }
+
+    // Check 1: Can Teacher A take Slot B?
+    // check_availability args: config locked teacher day slot
+    const checkA = `"${exePath}" check_availability config.txt locked.txt "${teacherA}" ${dayIndex} ${slotB}`;
+
+    // Check 2: Can Teacher B take Slot A?
+    const checkB = `"${exePath}" check_availability config.txt locked.txt "${teacherB}" ${dayIndex} ${slotA}`;
+
+    // Execute sequentially
+    exec(checkA, { cwd: C_FOLDER }, (err1, stdout1, stderr1) => {
+        if (err1 && err1.code !== 0) {
+            const msg = err1.code === 2 ? "is BUSY elsewhere" : "cannot take the slot";
+            return res.status(409).json({ error: `Swap Failed: ${teacherA} ${msg} at Slot ${slotB}.` });
+        }
+
+        exec(checkB, { cwd: C_FOLDER }, (err2, stdout2, stderr2) => {
+            if (err2 && err2.code !== 0) {
+                const msg = err2.code === 2 ? "is BUSY elsewhere" : "cannot take the slot";
+                return res.status(409).json({ error: `Swap Failed: ${teacherB} ${msg} at Slot ${slotA}.` });
+            }
+
+            // 2. Success -> Log *TWO* overrides
+            let overrides = [];
+            try { overrides = JSON.parse(fs.readFileSync(DAILY_OVERRIDES_FILE)); } catch (e) { overrides = []; }
+            const ts = new Date().toISOString();
+
+            // Override 1: Slot B has Teacher A
+            overrides.push({ id: Date.now(), date, branch, sem, section, day: dayIndex, slot: slotB, subject: subjectA, type: "Swap", teacher: teacherA, requester, timestamp: ts });
+
+            // Override 2: Slot A has Teacher B
+            overrides.push({ id: Date.now() + 1, date, branch, sem, section, day: dayIndex, slot: slotA, subject: subjectB, type: "Swap", teacher: teacherB, requester, timestamp: ts });
+
+            fs.writeFileSync(DAILY_OVERRIDES_FILE, JSON.stringify(overrides, null, 2));
+            res.json({ success: true, message: "Swap Confirmed!" });
+        });
+    });
+});
+
+// NEW: Get Overrides for a specific Teacher (for Dashboard)
+app.get('/api/daily-overrides', (req, res) => {
+    try {
+        const data = fs.readFileSync(DAILY_OVERRIDES_FILE);
+        res.json(JSON.parse(data));
+    } catch (e) { res.json([]); }
+});
 
 app.listen(5000, () => console.log("Server running on port 5000"));

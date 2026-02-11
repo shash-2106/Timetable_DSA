@@ -9,6 +9,7 @@ const Teacher = () => {
   const [submitted, setSubmitted] = useState(false);
   const [branch, setBranch] = useState('CS');
   const [teacherName, setTeacherName] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]); // Default Today
 
   const branches = ["CS", "CY", "CI", "CD", "IS", "AS", "BT", "CH", "CV", "EC", "EE", "EI", "ET", "IM", "ME"];
 
@@ -117,28 +118,40 @@ const Teacher = () => {
   const [bookBranch, setBookBranch] = useState('CS');
   const [bookSem, setBookSem] = useState('1');
   const [bookSec, setBookSec] = useState('Sec_A');
-  const [bookDay, setBookDay] = useState('0'); // 0-4
+  const [bookDate, setBookDate] = useState('');
   const [bookSlot, setBookSlot] = useState('0'); // 0-7
   const [bookSub, setBookSub] = useState('');
   const [bookType, setBookType] = useState('Lecture');
 
+  // --- SWAP STATE ---
+  const [showSwap, setShowSwap] = useState(false);
+  const [swapDate, setSwapDate] = useState('');
+  // My Details (Requester is teacherName)
+  const [mySlot, setMySlot] = useState('0');
+  const [mySub, setMySub] = useState('');
+  // Target Details
+  const [targetTeacher, setTargetTeacher] = useState('');
+  const [targetSlot, setTargetSlot] = useState('0');
+  const [targetSub, setTargetSub] = useState('');
+
   const handleBookSlot = async () => {
-    // Validation
     if (!bookSub) return alert("Enter Subject Name");
+    if (!bookDate) return alert("Select a Date");
 
     try {
       const payload = {
+        date: bookDate,
         branch: bookBranch,
         sem: `Semester_${bookSem}`,
         section: bookSec,
-        day: parseInt(bookDay),
         slot: parseInt(bookSlot),
         subject: bookSub,
         type: bookType,
-        teacher: teacherName
+        teacher: teacherName,
+        requester: teacherName
       };
 
-      const res = await fetch('http://localhost:5000/api/book-slot', {
+      const res = await fetch('http://localhost:5000/api/book-extra-slot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -146,9 +159,8 @@ const Teacher = () => {
 
       const data = await res.json();
       if (data.success) {
-        alert("✅ Slot Booked Successfully!");
+        alert("✅ Extra Slot Booked!");
         setShowBooking(false);
-        // Force re-render or reload would be ideal, but for now just alert.
       } else {
         alert("❌ Booking Failed: " + data.error);
       }
@@ -156,6 +168,39 @@ const Teacher = () => {
       alert("Connection Error");
       console.error(err);
     }
+  };
+
+  const handleSwapSlot = async () => {
+    if (!swapDate || !targetTeacher) return alert("Fill all fields");
+
+    try {
+      const payload = {
+        date: swapDate,
+        branch: bookBranch, // Assuming same branch/sem/sec for now (Proximity Swap)
+        sem: `Semester_${bookSem}`,
+        section: bookSec,
+        slotA: parseInt(mySlot),
+        teacherA: teacherName,
+        subjectA: mySub, // Subject held by Teacher A
+        slotB: parseInt(targetSlot),
+        teacherB: targetTeacher,
+        subjectB: targetSub, // Subject held by Teacher B
+        requester: teacherName
+      };
+
+      const res = await fetch('http://localhost:5000/api/swap-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (data.success) alert("✅ Swap Successful!");
+      else alert("❌ Swap Failed: " + data.error);
+
+      if (data.success) setShowSwap(false);
+
+    } catch (e) { alert("Connection Error"); }
   };
 
   if (submitted) {
@@ -166,6 +211,12 @@ const Teacher = () => {
           <div style={{ display: 'flex', gap: '20px' }}>
             <button style={homeBtnStyle} onClick={() => navigate('/')}>🏠 Home</button>
             <button style={{ ...homeBtnStyle, border: '1px solid rgba(255,255,255,0.2)' }} onClick={() => setSubmitted(false)}>← New Search</button>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={e => setSelectedDate(e.target.value)}
+              style={{ ...homeBtnStyle, background: '#1e293b', border: '1px solid white', color: 'white', width: '200px' }}
+            />
           </div>
         </div>
 
@@ -183,7 +234,8 @@ const Teacher = () => {
                 role="TEACHER"
                 teacherQuery={teacherName}
                 onBack={() => setSubmitted(false)}
-                key={Date.now()} // Force refresh
+                date={selectedDate} // Pass the selected date
+                key={selectedDate + Date.now()} // Force refresh on date change
               />
             </div>
 
@@ -227,10 +279,8 @@ const Teacher = () => {
                   </div>
 
                   <div style={{ display: 'flex', gap: '10px' }}>
-                    <select style={{ ...bigInputStyle, flex: 1 }} value={bookDay} onChange={e => setBookDay(e.target.value)}>
-                      {["Mon", "Tue", "Wed", "Thu", "Fri"].map((d, i) => <option key={i} value={i}>{d}</option>)}
-                    </select>
-                    <select style={{ ...bigInputStyle, flex: 1 }} value={bookSlot} onChange={e => setBookSlot(e.target.value)}>
+                    <input type="date" value={bookDate} onChange={e => setBookDate(e.target.value)} style={bigInputStyle} />
+                    <select style={bigInputStyle} value={bookSlot} onChange={e => setBookSlot(e.target.value)}>
                       {[0, 1, 2, 3, 4, 5, 6, 7].map(s => <option key={s} value={s}>Slot {s + 1}</option>)}
                     </select>
                   </div>
@@ -248,47 +298,103 @@ const Teacher = () => {
                 </div>
               </div>
             )}
+
+            {/* SWAP BUTTON */}
+            <button
+              onClick={() => setShowSwap(!showSwap)}
+              style={{
+                position: 'absolute', bottom: '30px', left: '30px',
+                background: '#f59e0b', color: 'white', border: 'none',
+                borderRadius: '50px', padding: '20px 40px', fontSize: '1.5rem',
+                fontWeight: 'bold', boxShadow: '0 10px 30px rgba(245, 158, 11, 0.5)',
+                cursor: 'pointer', zIndex: 10
+              }}
+            >
+              {showSwap ? "Cancel Swap" : "🔄 Swap Slot"}
+            </button>
+
+            {/* SWAP MODAL */}
+            {showSwap && (
+              <div style={{
+                position: 'absolute', bottom: '100px', left: '30px',
+                background: '#1e293b', padding: '30px', borderRadius: '20px',
+                border: '1px solid rgba(255,255,255,0.1)', width: '500px',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.5)', zIndex: 10,
+                animation: 'slideUp 0.3s ease-out'
+              }}>
+                <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '1.8rem' }}>Proposal for Swap</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <input type="date" value={swapDate} onChange={e => setSwapDate(e.target.value)} style={bigInputStyle} />
+                    <select style={bigInputStyle} value={bookBranch} onChange={e => setBookBranch(e.target.value)}>{branches.map(b => <option key={b} value={b}>{b}</option>)}</select>
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <select style={{ ...bigInputStyle }} value={bookSem} onChange={e => setBookSem(e.target.value)}>{[1, 3, 5, 7].map(s => <option key={s} value={s}>Sem {s}</option>)}</select>
+                    <select style={{ ...bigInputStyle }} value={bookSec} onChange={e => setBookSec(e.target.value)}>{["Sec_A", "Sec_B", "Sec_C"].map(s => <option key={s} value={s}>{s}</option>)}</select>
+                  </div>
+
+                  <div style={{ borderTop: '1px solid #334155', margin: '10px 0' }}></div>
+                  <label style={{ color: '#94a3b8' }}>MY Slot (to give away)</label>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <select style={bigInputStyle} value={mySlot} onChange={e => setMySlot(e.target.value)}>{[0, 1, 2, 3, 4, 5, 6, 7].map(s => <option key={s} value={s}>Slot {s + 1}</option>)}</select>
+                    <input placeholder="My Subject" value={mySub} onChange={e => setMySub(e.target.value)} style={bigInputStyle} />
+                  </div>
+
+                  <div style={{ borderTop: '1px solid #334155', margin: '10px 0' }}></div>
+                  <label style={{ color: '#94a3b8' }}>TARGET Slot (to take)</label>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <input placeholder="Target Teacher" value={targetTeacher} onChange={e => setTargetTeacher(e.target.value)} style={bigInputStyle} />
+                    <select style={bigInputStyle} value={targetSlot} onChange={e => setTargetSlot(e.target.value)}>{[0, 1, 2, 3, 4, 5, 6, 7].map(s => <option key={s} value={s}>Slot {s + 1}</option>)}</select>
+                    <input placeholder="Their Subject" value={targetSub} onChange={e => setTargetSub(e.target.value)} style={bigInputStyle} />
+                  </div>
+
+                  <button onClick={handleSwapSlot} style={{ ...largeBtnStyle, width: '100%', marginTop: '20px', background: '#f59e0b', fontSize: '1.4rem' }}>Confirm Swap</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div >
+    );
+  } else {
+    return (
+      <div style={pageStyle}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: '1800px' }}>
+          <h1 style={headerTitleStyle}>Faculty Portal</h1>
+          <button style={homeBtnStyle} onClick={() => navigate('/')}>🏠 Home</button>
+        </div>
+
+        <div style={{ ...glassContainerStyle, overflow: 'hidden' }}>
+          <div style={{ height: '100%', overflowY: 'auto', paddingRight: '10px' }}>
+            <h2 style={{ fontSize: '3rem', textAlign: 'center', marginBottom: '50px', color: 'white' }}>View Workload</h2>
+
+            <div style={{ display: 'grid', gap: '40px' }}>
+              <div>
+                <label style={bigLabelStyle}>Department</label>
+                <select value={branch} onChange={e => setBranch(e.target.value)} style={bigInputStyle}>
+                  {branches.map(b => <option key={b} value={b}>{b} Engineering</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label style={bigLabelStyle}>Faculty Name</label>
+                <input
+                  placeholder="e.g. Prof_Smith"
+                  value={teacherName}
+                  onChange={e => setTeacherName(e.target.value)}
+                  style={{ ...bigInputStyle, cursor: 'text' }}
+                />
+              </div>
+
+              <button style={{ ...largeBtnStyle, background: '#10b981', color: 'white', marginTop: '30px', boxShadow: '0 20px 40px rgba(16, 185, 129, 0.3)' }} onClick={handleSubmit}>
+                Search Schedule
+              </button>
+            </div>
           </div>
         </div>
       </div>
     );
   }
-
-  return (
-    <div style={pageStyle}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: '1800px' }}>
-        <h1 style={headerTitleStyle}>Faculty Portal</h1>
-        <button style={homeBtnStyle} onClick={() => navigate('/')}>🏠 Home</button>
-      </div>
-
-      <div style={glassContainerStyle}>
-        <h2 style={{ fontSize: '3rem', textAlign: 'center', marginBottom: '50px', color: 'white' }}>View Workload</h2>
-
-        <div style={{ display: 'grid', gap: '40px' }}>
-          <div>
-            <label style={bigLabelStyle}>Department</label>
-            <select value={branch} onChange={e => setBranch(e.target.value)} style={bigInputStyle}>
-              {branches.map(b => <option key={b} value={b}>{b} Engineering</option>)}
-            </select>
-          </div>
-
-          <div>
-            <label style={bigLabelStyle}>Faculty Name</label>
-            <input
-              placeholder="e.g. Prof_Smith"
-              value={teacherName}
-              onChange={e => setTeacherName(e.target.value)}
-              style={{ ...bigInputStyle, cursor: 'text' }}
-            />
-          </div>
-
-          <button style={{ ...largeBtnStyle, background: '#10b981', color: 'white', marginTop: '30px', boxShadow: '0 20px 40px rgba(16, 185, 129, 0.3)' }} onClick={handleSubmit}>
-            Search Schedule
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 };
 
 export default Teacher;

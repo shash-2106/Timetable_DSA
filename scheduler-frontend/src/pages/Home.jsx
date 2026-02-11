@@ -15,7 +15,8 @@ const Home = () => {
     justifyContent: 'center',
     background: 'linear-gradient(135deg, #020617 0%, #0f172a 60%, #1e293b 100%)',
     color: 'white',
-    overflow: 'hidden',
+    overflowY: 'auto',
+    overflowX: 'hidden',
     fontFamily: "'Inter', 'Segoe UI', sans-serif",
     animation: 'fadeIn 0.8s ease-out'
   };
@@ -105,7 +106,7 @@ const Home = () => {
         </div>
 
         <div style={cardContainerStyle}>
-          
+
           {/* ADMIN */}
           <div
             style={{ ...cardStyle, animationDelay: '0.2s' }}

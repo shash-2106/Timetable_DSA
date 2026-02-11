@@ -1,26 +1,32 @@
 import React, { useState, useEffect } from 'react';
 
-const TimetableGrid = ({ role, branch, semester, section, teacherQuery, onBack }) => {
+const TimetableGrid = ({ role, branch, semester, section, teacherQuery, onBack, date }) => {
   const [timetableData, setTimetableData] = useState(null);
+  const [overrides, setOverrides] = useState([]);
   const [loading, setLoading] = useState(true);
   const [teacherName, setTeacherName] = useState(teacherQuery || '');
   const [showSearch, setShowSearch] = useState(!teacherQuery);
 
   useEffect(() => {
-    // CACHE BUSTING: Add timestamp to force fresh fetch
-    fetch(`/data.json?t=${Date.now()}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("File not found");
-        return res.json();
-      })
-      .then((data) => {
-        setTimetableData(data);
+    const fetchData = async () => {
+      try {
+        // 1. Fetch Master Schedule
+        const resMain = await fetch(`/data.json?t=${Date.now()}`);
+        const dataMain = await resMain.json();
+
+        // 2. Fetch Daily Overrides
+        const resOver = await fetch('/api/daily-overrides');
+        const dataOver = await resOver.json();
+
+        setTimetableData(dataMain);
+        setOverrides(dataOver);
         setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Fetch Error:", err);
         setLoading(false);
-      });
+      }
+    };
+    fetchData();
   }, []);
 
   if (loading) return <div style={{ textAlign: 'center', padding: '50px', color: 'white', fontSize: '1.2rem' }}>Loading Schedule...</div>;
@@ -28,6 +34,19 @@ const TimetableGrid = ({ role, branch, semester, section, teacherQuery, onBack }
 
   const times = ["09:00", "10:00", "BREAK", "11:30", "12:30", "LUNCH", "02:30", "03:30"];
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+
+  // HELPER: Check for Overrides
+  const getOverride = (targetBranch, targetSem, targetSec, day, slot) => {
+    if (!date) return null; // No date selected = No overrides shown
+    return overrides.find(o =>
+      o.date === date &&
+      o.branch === targetBranch &&
+      o.sem === targetSem &&
+      o.section === targetSec &&
+      o.day === day &&
+      o.slot === slot
+    );
+  };
 
   // --- HELPER: TREE TRAVERSAL (Find specific section) ---
   const findSectionNode = (root, targetBranch, targetSem, targetSec) => {
@@ -42,7 +61,7 @@ const TimetableGrid = ({ role, branch, semester, section, teacherQuery, onBack }
     return secNode;
   };
 
-  const renderTable = (gridData) => (
+  const renderTable = (gridData, contextBranch, contextSem, contextSec) => (
     <div className="timetable-container" style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
         <thead>
@@ -56,20 +75,45 @@ const TimetableGrid = ({ role, branch, semester, section, teacherQuery, onBack }
             <tr key={dayIdx}>
               <td className="day-col" style={{ padding: '15px', border: '1px solid #334155', background: '#1e293b', fontWeight: 'bold', color: '#60a5fa' }}>{days[dayIdx]}</td>
               {row.map((cell, slotIdx) => {
-                let style = { padding: '15px', border: '1px solid #334155', textAlign: 'center', color: '#e2e8f0', minWidth: '100px' };
-                if (cell === "FREE") cell = "-";
+                let displayContent = cell;
+                let bgStyle = { padding: '15px', border: '1px solid #334155', textAlign: 'center', color: '#e2e8f0', minWidth: '100px', position: 'relative' };
 
-                if (cell === "BREAK" || cell === "LUNCH") {
-                  style.background = '#2d2d2d';
-                  style.color = '#64748b';
-                  style.fontStyle = 'italic';
-                } else if (cell !== "-" && !cell.includes("BREAK")) {
-                  style.background = 'rgba(59, 130, 246, 0.15)';
-                  style.color = '#93c5fd';
-                  style.fontWeight = '500';
+                // --- OVERRIDE LOGIC ---
+                // If we are in STUDENT mode, we know exact Branch/Sem/Sec
+                if (role === 'STUDENT') {
+                  const override = getOverride(contextBranch, contextSem, contextSec, dayIdx, slotIdx);
+                  if (override) {
+                    displayContent = `${override.subject} (${override.type})\n${override.teacher}`;
+                    bgStyle.border = '2px solid #f59e0b'; // Highlight
+                    bgStyle.background = 'rgba(245, 158, 11, 0.2)';
+                  }
                 }
 
-                return <td key={slotIdx} style={style}>{cell}</td>;
+                // If in TEACHER mode, 'cell' might already be modified by traverse check below 
+                // but we also need to check if *this teacher* has an override elsewhere.
+                // The Teacher View logic handles grid construction manually, so we inject overrides there.
+
+                if (displayContent === "FREE") displayContent = "-";
+
+                if (displayContent === "BREAK" || displayContent === "LUNCH") {
+                  bgStyle.background = '#2d2d2d';
+                  bgStyle.color = '#64748b';
+                  bgStyle.fontStyle = 'italic';
+                } else if (displayContent !== "-" && !displayContent.includes("BREAK")) {
+                  if (!bgStyle.background) {
+                    bgStyle.background = 'rgba(59, 130, 246, 0.15)';
+                    bgStyle.color = '#93c5fd';
+                    bgStyle.fontWeight = '500';
+                  }
+                }
+
+                return <td key={slotIdx} style={bgStyle}>
+                  {displayContent}
+                  {/* Badge for Override */}
+                  {role === 'STUDENT' && getOverride(contextBranch, contextSem, contextSec, dayIdx, slotIdx) &&
+                    <span style={{ position: 'absolute', top: '2px', right: '2px', fontSize: '0.7rem', background: '#f59e0b', color: 'black', padding: '2px 4px', borderRadius: '4px' }}>EXTRA</span>
+                  }
+                </td>;
               })}
             </tr>
           ))}
@@ -99,13 +143,14 @@ const TimetableGrid = ({ role, branch, semester, section, teacherQuery, onBack }
       <div className="fade-in">
         <div style={{ marginBottom: '20px' }}>
           <h2 style={{ color: '#60a5fa', margin: 0 }}>{branch} - {semName} - {secName}</h2>
+          {date && <p style={{ color: '#94a3b8' }}>Viewing Schedule for: {date}</p>}
         </div>
-        {renderTable(sectionNode.grid)}
+        {renderTable(sectionNode.grid, branch, semName, secName)}
       </div>
     );
   };
 
-  // --- TEACHER VIEW (UPDATED LOGIC) ---
+  // --- TEACHER VIEW ---
   const renderTeacherView = () => {
     if (showSearch) {
       return (
@@ -121,71 +166,70 @@ const TimetableGrid = ({ role, branch, semester, section, teacherQuery, onBack }
 
     let myGrid = Array(5).fill(null).map(() => Array(8).fill("-"));
     let found = false;
+    const query = teacherName.trim().toLowerCase();
 
-    // UPDATED TRAVERSAL: Passes 'semName' down the tree
-    const traverseAndSearch = (node, semName = '') => {
+    // 1. INJECT OVERRIDES first (so they appear even if Master has nothing)
+    if (date) {
+      overrides.forEach(o => {
+        if (o.date === date && o.teacher.toLowerCase() === query) {
+          const shortSem = o.sem.replace('Semester_', 'Sem');
+          const shortSec = o.section.replace('Sec_', '');
+          myGrid[o.day][o.slot] = `${o.subject} (${o.type})\n(${shortSem}-${shortSec}) [EXTRA]`;
+          found = true;
+        }
+      });
+    }
+
+    // 2. Traversal for Master Schedule
+    const traverseAndSearch = (node, branchName = '', semName = '') => {
       if (!node) return;
-
-      // 1. If this is a Semester Node, capture its name (e.g., "Semester_1")
+      let currentBranch = branchName;
       let currentSem = semName;
-      if (node.type === 2) {
-        currentSem = node.name;
-      }
 
-      // 2. If this is a Section Node, check the grid
+      if (node.type === 1) currentBranch = node.name; // Branch Node
+      if (node.type === 2) currentSem = node.name;    // Sem Node
+
       if (node.type === 3 && node.grid) {
+        // Section Node
         node.grid.forEach((dayRow, dayIndex) => {
           dayRow.forEach((subject, slotIndex) => {
-
-            // STRICT MATCHING
-            let isMatch = false;
-
-            // Debug every non-free cell to see what's happening
-            if (subject && subject !== "FREE") {
-              console.log(`Scanning Cell: '${subject}'`); // DEBUG raw cell
-
-              // Cell format: "Subject (Teacher)"
-              // Cell format: "Subject (Type)\nTeacher"
+            if (subject && subject !== "FREE" && !subject.includes("BREAK") && !subject.includes("LUNCH")) {
               const parts = subject.split('\n');
               const assignedTeacher = parts.length > 1 ? parts[1] : "";
 
-              console.log(`   -> Extracted Teacher: '${assignedTeacher}'`); // DEBUG regex result
+              if (assignedTeacher.trim().toLowerCase().includes(query)) {
+                // MATCH in Master Schedule
 
-              // Compare
-              const query = teacherName.trim().toLowerCase();
-              const target = assignedTeacher.trim().toLowerCase();
+                // CHECK FOR SWAP OUT:
+                // Is there an override for THIS specific slot (Branch/Sem/Sec/Day/Slot)?
+                const isSwappedOut = overrides.some(o =>
+                  o.date === date &&
+                  o.branch === currentBranch &&
+                  o.sem === currentSem &&
+                  o.section === node.name &&
+                  o.day === dayIndex &&
+                  o.slot === slotIndex
+                  // If an override exists here, it means the text in this slot is CHANGED.
+                  // Since we already matched "assignedTeacher" (Original), any override means 
+                  // the Original teacher is NO LONGER teaching this.
+                );
 
-              console.log(`   -> Comparing '${target}' with query '${query}'`);
-
-              if (target.includes(query)) {
-                console.log("   -> MATCH FOUND!");
-                isMatch = true;
-              } else {
-                console.log("   -> NO MATCH");
+                if (!isSwappedOut && !myGrid[dayIndex][slotIndex].includes("[EXTRA]")) {
+                  const cleanSub = subject.split('(')[0].trim();
+                  const shortSem = currentSem.replace('Semester_', 'Sem');
+                  const shortSec = node.name.replace('Sec_', '');
+                  myGrid[dayIndex][slotIndex] = `${cleanSub} (Lecture)\n(${shortSem}-${shortSec})`;
+                  found = true;
+                }
               }
             }
-
-            if (isMatch) {
-              const existing = myGrid[dayIndex][slotIndex] === "-" ? "" : myGrid[dayIndex][slotIndex] + "\n";
-              const cleanSub = subject.split('(')[0].trim();
-
-              // NEW FORMAT: Subject (Sem1-A)
-              const shortSem = currentSem.replace('Semester_', 'Sem');
-              const shortSec = node.name.replace('Sec_', '');
-
-              myGrid[dayIndex][slotIndex] = `${existing}${cleanSub} (${shortSem}-${shortSec})`;
-              found = true;
-            }
-            if (subject === "BREAK") myGrid[dayIndex][slotIndex] = "BREAK";
-            if (subject === "LUNCH") myGrid[dayIndex][slotIndex] = "LUNCH";
+            // Preserve Breaks
+            if (subject === "BREAK" && !myGrid[dayIndex][slotIndex]) myGrid[dayIndex][slotIndex] = "BREAK";
+            if (subject === "LUNCH" && !myGrid[dayIndex][slotIndex]) myGrid[dayIndex][slotIndex] = "LUNCH";
           });
         });
       }
-
-      // 3. Recurse children
-      if (node.children) {
-        node.children.forEach(child => traverseAndSearch(child, currentSem));
-      }
+      if (node.children) node.children.forEach(child => traverseAndSearch(child, currentBranch, currentSem));
     };
 
     traverseAndSearch(timetableData);
@@ -194,8 +238,9 @@ const TimetableGrid = ({ role, branch, semester, section, teacherQuery, onBack }
       <div className="fade-in">
         <div style={{ marginBottom: '20px' }}>
           <h2 style={{ color: '#facc15', fontSize: '2rem' }}>Schedule: {teacherName}</h2>
+          {date && <p style={{ color: '#94a3b8' }}>Viewing Schedule for: {date}</p>}
         </div>
-        {!found ? <div className="error-banner" style={{ fontSize: '1.5rem' }}>No classes found for "{teacherName}".</div> : renderTable(myGrid)}
+        {!found ? <div className="error-banner" style={{ fontSize: '1.5rem' }}>No classes found for "{teacherName}".</div> : renderTable(myGrid, null, null, null)}
       </div>
     );
   };

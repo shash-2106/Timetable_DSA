@@ -34,6 +34,7 @@ CS|Semester_3|Sec_C|3|0|OS (Lecture)\nProf_D
 CS|Semester_3|Sec_C|3|1|DSA (Lecture)\nProf_E
 CS|Semester_3|Sec_C|3|6|DSA (Lab)\nProf_E
 CS|Semester_3|Sec_C|3|7|DSA (Lab)\nProf_E
+CS|Semester_3|Sec_C|4|7|Maths (Lecture)\nProf_A
 CS|Semester_5|Sec_A|0|0|DBMS (Lab)\nProf_D
 CS|Semester_5|Sec_A|0|1|DBMS (Lab)\nProf_D
 CS|Semester_5|Sec_A|3|0|Cloud (Lecture)\nProf_E
