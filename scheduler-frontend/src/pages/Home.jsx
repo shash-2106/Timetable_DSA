@@ -18,47 +18,38 @@ const Home = () => {
     overflowY: 'auto',
     overflowX: 'hidden',
     fontFamily: "'Inter', 'Segoe UI', sans-serif",
-    animation: 'fadeIn 0.8s ease-out'
+    animation: 'fadeIn 0.8s ease-out',
+    padding: '20px'
   };
 
   const titleStyle = {
-    fontSize: '6.5rem',   // ⬅️ Enlarged
+    fontSize: 'clamp(2.2rem, 6vw, 6.5rem)',
     fontWeight: '900',
     margin: 0,
     background: 'linear-gradient(to right, #60a5fa, #c084fc)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     textShadow: '0 15px 60px rgba(96,165,250,0.35)',
-    letterSpacing: '-3px',
+    letterSpacing: '-2px',
     animation: 'slideDown 0.9s ease-out'
   };
 
   const subtitleStyle = {
-    fontSize: '2.2rem',
+    fontSize: 'clamp(1rem, 2.5vw, 2.2rem)',
     color: '#cbd5f5',
-    marginTop: '24px',
+    marginTop: '16px',
     fontWeight: '400',
-    letterSpacing: '1.2px',
+    letterSpacing: '1px',
     animation: 'fadeUp 1s ease-out'
-  };
-
-  const cardContainerStyle = {
-    display: 'flex',
-    gap: '70px',
-    marginTop: '100px',
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: '0 60px'
   };
 
   const cardStyle = {
     background: 'rgba(255, 255, 255, 0.04)',
     border: '1px solid rgba(255, 255, 255, 0.12)',
     backdropFilter: 'blur(22px)',
-    padding: '70px 45px',
-    borderRadius: '32px',
-    width: '480px',   // ⬅️ Slightly bigger
+    padding: 'clamp(35px, 5vw, 70px) clamp(25px, 3vw, 45px)',
+    borderRadius: 'clamp(20px, 3vw, 32px)',
+    width: 'clamp(260px, 70vw, 480px)',
     textAlign: 'center',
     cursor: 'pointer',
     transition: 'all 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
@@ -105,10 +96,20 @@ const Home = () => {
           <p style={subtitleStyle}>Automated Scheduling for Universities</p>
         </div>
 
-        <div style={cardContainerStyle}>
+        <div className="card-container" style={{
+          display: 'flex',
+          gap: 'clamp(25px, 4vw, 70px)',
+          marginTop: 'clamp(40px, 7vw, 100px)',
+          width: '100%',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '0 20px',
+          flexWrap: 'wrap'
+        }}>
 
           {/* ADMIN */}
           <div
+            className="role-card"
             style={{ ...cardStyle, animationDelay: '0.2s' }}
             onClick={() => navigate('/admin')}
             onMouseEnter={e => {
@@ -124,13 +125,14 @@ const Home = () => {
               e.currentTarget.style.boxShadow = '0 25px 60px rgba(0,0,0,0.55)';
             }}
           >
-            <div style={{ fontSize: '6.5rem', marginBottom: '35px' }}>⚙️</div>
-            <h2 style={{ fontSize: '2.7rem', margin: '0 0 18px 0' }}>Admin</h2>
-            <p style={{ fontSize: '1.5rem', color: '#94a3b8' }}>Configuration & Setup</p>
+            <div style={{ fontSize: 'clamp(3rem, 5vw, 6.5rem)', marginBottom: 'clamp(15px, 2vw, 35px)' }}>⚙️</div>
+            <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.7rem)', margin: '0 0 12px 0' }}>Admin</h2>
+            <p style={{ fontSize: 'clamp(0.9rem, 1.5vw, 1.5rem)', color: '#94a3b8' }}>Configuration & Setup</p>
           </div>
 
           {/* FACULTY */}
           <div
+            className="role-card"
             style={{ ...cardStyle, animationDelay: '0.35s' }}
             onClick={() => navigate('/teacher')}
             onMouseEnter={e => {
@@ -146,13 +148,14 @@ const Home = () => {
               e.currentTarget.style.boxShadow = '0 25px 60px rgba(0,0,0,0.55)';
             }}
           >
-            <div style={{ fontSize: '6.5rem', marginBottom: '35px' }}>👨‍🏫</div>
-            <h2 style={{ fontSize: '2.7rem', margin: '0 0 18px 0' }}>Faculty</h2>
-            <p style={{ fontSize: '1.5rem', color: '#94a3b8' }}>View Workload</p>
+            <div style={{ fontSize: 'clamp(3rem, 5vw, 6.5rem)', marginBottom: 'clamp(15px, 2vw, 35px)' }}>👨‍🏫</div>
+            <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.7rem)', margin: '0 0 12px 0' }}>Faculty</h2>
+            <p style={{ fontSize: 'clamp(0.9rem, 1.5vw, 1.5rem)', color: '#94a3b8' }}>View Workload</p>
           </div>
 
           {/* STUDENT */}
           <div
+            className="role-card"
             style={{ ...cardStyle, animationDelay: '0.5s' }}
             onClick={() => navigate('/student')}
             onMouseEnter={e => {
@@ -168,9 +171,9 @@ const Home = () => {
               e.currentTarget.style.boxShadow = '0 25px 60px rgba(0,0,0,0.55)';
             }}
           >
-            <div style={{ fontSize: '6.5rem', marginBottom: '35px' }}>🎓</div>
-            <h2 style={{ fontSize: '2.7rem', margin: '0 0 18px 0' }}>Student</h2>
-            <p style={{ fontSize: '1.5rem', color: '#94a3b8' }}>Check Timetables</p>
+            <div style={{ fontSize: 'clamp(3rem, 5vw, 6.5rem)', marginBottom: 'clamp(15px, 2vw, 35px)' }}>🎓</div>
+            <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.7rem)', margin: '0 0 12px 0' }}>Student</h2>
+            <p style={{ fontSize: 'clamp(0.9rem, 1.5vw, 1.5rem)', color: '#94a3b8' }}>Check Timetables</p>
           </div>
         </div>
       </div>

@@ -135,30 +135,30 @@ const Admin = () => {
     }
   };
 
-  // --- STYLES ---
+  // --- STYLES (Responsive) ---
   const pageStyle = {
-    height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column',
+    minHeight: '100vh', width: '100vw', display: 'flex', flexDirection: 'column',
     alignItems: 'center', background: 'linear-gradient(135deg, #020617 0%, #0f172a 60%, #1e293b 100%)',
-    color: 'white', overflow: 'hidden', fontFamily: "'Inter', sans-serif", padding: '30px'
+    color: 'white', overflowX: 'hidden', overflowY: 'auto', fontFamily: "'Inter', sans-serif", padding: 'clamp(15px, 3vw, 30px)'
   };
 
   const glassContainerStyle = {
     flex: 1, width: '100%', maxWidth: '1800px', background: 'rgba(255, 255, 255, 0.03)',
     border: '1px solid rgba(255, 255, 255, 0.12)', backdropFilter: 'blur(25px)',
-    borderRadius: '40px', padding: '40px 60px', boxShadow: '0 30px 80px rgba(0,0,0,0.6)',
+    borderRadius: 'clamp(20px, 3vw, 40px)', padding: 'clamp(20px, 3vw, 40px) clamp(15px, 4vw, 60px)', boxShadow: '0 30px 80px rgba(0,0,0,0.6)',
     display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative'
   };
 
   const bigInputStyle = {
-    width: '100%', padding: '25px 30px', fontSize: '1.6rem', background: '#1e293b',
-    border: '2px solid rgba(255, 255, 255, 0.2)', borderRadius: '20px', color: 'white',
-    outline: 'none', transition: 'border-color 0.2s', fontFamily: 'inherit'
+    width: '100%', padding: 'clamp(12px, 2vw, 25px) clamp(15px, 2vw, 30px)', fontSize: 'clamp(1rem, 1.8vw, 1.6rem)', background: '#1e293b',
+    border: '2px solid rgba(255, 255, 255, 0.2)', borderRadius: 'clamp(12px, 2vw, 20px)', color: 'white',
+    outline: 'none', transition: 'border-color 0.2s', fontFamily: 'inherit', boxSizing: 'border-box'
   };
 
   const largeBtnStyle = {
-    padding: '22px 50px', fontSize: '1.6rem', borderRadius: '20px', border: 'none',
+    padding: 'clamp(12px, 2vw, 22px) clamp(20px, 3vw, 50px)', fontSize: 'clamp(0.9rem, 1.8vw, 1.6rem)', borderRadius: 'clamp(12px, 2vw, 20px)', border: 'none',
     cursor: 'pointer', fontWeight: '700', transition: 'all 0.2s', display: 'inline-flex',
-    alignItems: 'center', gap: '15px'
+    alignItems: 'center', gap: '10px'
   };
 
   // --- AUTH LOGIC ---
@@ -319,13 +319,13 @@ const Admin = () => {
   if (!isAuthenticated) {
     return (
       <div style={{ ...pageStyle, justifyContent: 'center' }}>
-        <div style={{ ...glassContainerStyle, maxWidth: '700px', height: '600px', flex: 'none', justifyContent: 'center', alignItems: 'center' }}>
-          <div style={{ fontSize: '7rem', marginBottom: '30px' }}>🔐</div>
-          <h1 style={{ fontSize: '4rem', fontWeight: '900', marginBottom: '15px', background: 'linear-gradient(to right, #60a5fa, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Admin Access</h1>
+        <div className="glass-container" style={{ ...glassContainerStyle, maxWidth: 'min(90vw, 700px)', minHeight: '400px', flex: 'none', justifyContent: 'center', alignItems: 'center' }}>
+          <div style={{ fontSize: 'clamp(3.5rem, 6vw, 7rem)', marginBottom: '20px' }}>🔐</div>
+          <h1 style={{ fontSize: 'clamp(2rem, 4vw, 4rem)', fontWeight: '900', marginBottom: '15px', background: 'linear-gradient(to right, #60a5fa, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Admin Access</h1>
           <form onSubmit={handleLogin} style={{ width: '100%' }}>
-            <input type="password" placeholder="Password" autoFocus style={{ ...bigInputStyle, textAlign: 'center', fontSize: '2rem', borderColor: authError ? '#ef4444' : 'rgba(255,255,255,0.2)' }} value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} />
+            <input type="password" placeholder="Password" autoFocus style={{ ...bigInputStyle, textAlign: 'center', fontSize: 'clamp(1.2rem, 2vw, 2rem)', borderColor: authError ? '#ef4444' : 'rgba(255,255,255,0.2)' }} value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} />
             {authError && <p style={{ color: '#ef4444', marginTop: '15px', fontWeight: 'bold' }}>Invalid Credentials</p>}
-            <div style={{ marginTop: '40px', display: 'flex', gap: '25px', justifyContent: 'center' }}>
+            <div className="btn-group" style={{ marginTop: '30px', display: 'flex', gap: '20px', justifyContent: 'center' }}>
               <button type="button" style={{ ...largeBtnStyle, background: 'rgba(255,255,255,0.1)', color: 'white' }} onClick={() => navigate('/')}>Cancel</button>
               <button type="submit" style={{ ...largeBtnStyle, background: '#3b82f6', color: 'white' }}>Login</button>
             </div>
@@ -338,11 +338,11 @@ const Admin = () => {
   if (viewAllMode) {
     return (
       <div style={pageStyle}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: '1800px', marginBottom: '30px' }}>
-          <h1 style={{ fontSize: '5rem', fontWeight: '900', background: 'linear-gradient(to right, #60a5fa, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Master Schedule</h1>
-          <div style={{ display: 'flex', gap: '20px' }}>
+        <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: '1800px', marginBottom: 'clamp(15px, 2vw, 30px)' }}>
+          <h1 style={{ fontSize: 'clamp(1.8rem, 5vw, 5rem)', fontWeight: '900', background: 'linear-gradient(to right, #60a5fa, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Master Schedule</h1>
+          <div className="btn-group" style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
             <button style={{ ...largeBtnStyle, background: '#10b981', color: 'white' }} onClick={handleDownloadPDF} disabled={isGenerating}>
-              {isGenerating ? "Processing..." : "📥 Download Formal PDF"}
+              {isGenerating ? "Processing..." : "📥 PDF"}
             </button>
             <button style={{ ...largeBtnStyle, background: 'rgba(255,255,255,0.1)', color: 'white' }} onClick={() => setViewAllMode(false)}>← Back</button>
           </div>
@@ -391,10 +391,10 @@ const Admin = () => {
                   Array.from({ length: sem.sections }).map((_, secIdx) => {
                     const secLetter = String.fromCharCode(65 + secIdx);
                     return (
-                      <div key={secLetter} className="formal-pdf-page" style={{ height: 'auto', minHeight: '85vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderBottom: '2px dashed rgba(255,255,255,0.1)', marginBottom: '100px', paddingBottom: '60px', background: 'transparent' }}>
-                        <div style={{ marginBottom: '30px' }}>
-                          <span style={{ fontSize: '2.2rem', color: '#94a3b8', display: 'block', marginBottom: '10px' }}>{sem.branch} • Semester {sem.semester}</span>
-                          <h3 style={{ fontSize: '4.5rem', color: '#60a5fa', margin: 0 }}>Section {secLetter}</h3>
+                      <div key={secLetter} className="formal-pdf-page" style={{ height: 'auto', minHeight: '70vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderBottom: '2px dashed rgba(255,255,255,0.1)', marginBottom: 'clamp(40px, 7vw, 100px)', paddingBottom: 'clamp(20px, 4vw, 60px)', background: 'transparent' }}>
+                        <div style={{ marginBottom: 'clamp(15px, 2vw, 30px)' }}>
+                          <span style={{ fontSize: 'clamp(1.2rem, 2.5vw, 2.2rem)', color: '#94a3b8', display: 'block', marginBottom: '8px' }}>{sem.branch} • Semester {sem.semester}</span>
+                          <h3 style={{ fontSize: 'clamp(2rem, 4.5vw, 4.5rem)', color: '#60a5fa', margin: 0 }}>Section {secLetter}</h3>
                         </div>
                         <div style={{ width: '100%', overflowX: 'auto' }}>
                           <TimetableGrid role="STUDENT" branch={sem.branch} semester={sem.semester} section={`Sec_${secLetter}`} key={Date.now()} />
@@ -425,31 +425,31 @@ const Admin = () => {
 
   return (
     <div style={pageStyle}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: '1800px', marginBottom: '30px' }}>
-        <h1 style={{ fontSize: '5rem', fontWeight: '900', background: 'linear-gradient(to right, #60a5fa, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Admin Portal</h1>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: '1800px', marginBottom: 'clamp(15px, 2vw, 30px)' }}>
+        <h1 style={{ fontSize: 'clamp(1.8rem, 5vw, 5rem)', fontWeight: '900', background: 'linear-gradient(to right, #60a5fa, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Admin Portal</h1>
         <button style={{ ...largeBtnStyle, background: 'rgba(255,255,255,0.1)', color: '#cbd5f5' }} onClick={() => navigate('/')}>🏠 Home</button>
       </div>
 
 
 
-      <div style={glassContainerStyle}>
+      <div className="glass-container" style={glassContainerStyle}>
 
-        {/* NEW: DASHBOARD HEADER IF DATA EXISTS */}
+        {/* DASHBOARD HEADER IF DATA EXISTS */}
         {hasExistingData && step === 1 && (
-          <div style={{ marginBottom: '40px', padding: '30px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '25px', border: '1px solid rgba(16, 185, 129, 0.3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="existing-data-banner" style={{ marginBottom: 'clamp(20px, 3vw, 40px)', padding: 'clamp(15px, 2vw, 30px)', background: 'rgba(16, 185, 129, 0.1)', borderRadius: 'clamp(15px, 2vw, 25px)', border: '1px solid rgba(16, 185, 129, 0.3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h2 style={{ fontSize: '2.5rem', color: '#34d399', margin: 0 }}>📅 Existing Schedule Found</h2>
-              <p style={{ color: '#ecfdf5', fontSize: '1.2rem', margin: '5px 0 0 0' }}>Master Timetable is active.</p>
+              <h2 style={{ fontSize: 'clamp(1.3rem, 2.5vw, 2.5rem)', color: '#34d399', margin: 0 }}>📅 Existing Schedule Found</h2>
+              <p style={{ color: '#ecfdf5', fontSize: 'clamp(0.8rem, 1.3vw, 1.2rem)', margin: '5px 0 0 0' }}>Master Timetable is active.</p>
             </div>
-            <div style={{ display: 'flex', gap: '20px' }}>
-              <button onClick={handleContinue} style={{ ...largeBtnStyle, background: '#3b82f6', color: 'white', padding: '15px 30px', fontSize: '1.3rem' }}>
-                ✏️ Continue Editing
+            <div className="btn-group" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <button onClick={handleContinue} style={{ ...largeBtnStyle, background: '#3b82f6', color: 'white' }}>
+                ✏️ Continue
               </button>
-              <button onClick={handleViewMaster} style={{ ...largeBtnStyle, background: '#10b981', color: 'white', padding: '15px 30px', fontSize: '1.3rem' }}>
-                👁 View Master Data
+              <button onClick={handleViewMaster} style={{ ...largeBtnStyle, background: '#10b981', color: 'white' }}>
+                👁 View
               </button>
-              <button onClick={handleClearAll} style={{ ...largeBtnStyle, background: '#ef4444', color: 'white', padding: '15px 30px', fontSize: '1.3rem' }}>
-                🗑 Clear All & Restart
+              <button onClick={handleClearAll} style={{ ...largeBtnStyle, background: '#ef4444', color: 'white' }}>
+                🗑 Clear
               </button>
             </div>
           </div>
@@ -457,78 +457,77 @@ const Admin = () => {
 
         {step === 1 && (
           <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <h2 style={{ fontSize: '3rem', marginBottom: '40px' }}>Step 1: Academy Configuration</h2>
-              {/* Fallback Clear button if no data found but local storage has draft */}
+            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+              <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 3rem)', marginBottom: 'clamp(20px, 3vw, 40px)' }}>Step 1: Academy Configuration</h2>
               {!hasExistingData && allSemesterData.length > 0 &&
-                <button onClick={handleClearAll} style={{ ...largeBtnStyle, background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', fontSize: '1.2rem', padding: '10px 20px', height: 'fit-content' }}>Reset Draft</button>
+                <button onClick={handleClearAll} style={{ ...largeBtnStyle, background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', height: 'fit-content' }}>Reset Draft</button>
               }
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '60px' }}>
-              <div><label style={{ fontSize: '1.8rem', color: '#cbd5f5', display: 'block', marginBottom: '15px' }}>Branch</label><select value={branch} onChange={e => setBranch(e.target.value)} style={bigInputStyle}>{branches.map(b => <option key={b} value={b}>{b}</option>)}</select></div>
-              <div><label style={{ fontSize: '1.8rem', color: '#cbd5f5', display: 'block', marginBottom: '15px' }}>Cycle</label><select value={cycle} onChange={e => setCycle(e.target.value)} style={bigInputStyle}><option value="Odd">Odd (Sem 1,3,5,7)</option><option value="Even">Even (Sem 2,4,6,8)</option></select></div>
-              <div><label style={{ fontSize: '1.8rem', color: '#cbd5f5', display: 'block', marginBottom: '15px' }}>Semester</label><select value={currentSem} onChange={e => setCurrentSem(parseInt(e.target.value))} style={bigInputStyle}>{semesterOptions.map(s => <option key={s} value={s}>Sem {s}</option>)}</select></div>
-              <div><label style={{ fontSize: '1.8rem', color: '#cbd5f5', display: 'block', marginBottom: '15px' }}>Sections</label><select value={numSections} onChange={e => setNumSections(parseInt(e.target.value))} style={bigInputStyle}>{[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n} Sections</option>)}</select></div>
+            <div className="form-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(20px, 4vw, 60px)' }}>
+              <div><label style={{ fontSize: 'clamp(1rem, 2vw, 1.8rem)', color: '#cbd5f5', display: 'block', marginBottom: '10px' }}>Branch</label><select value={branch} onChange={e => setBranch(e.target.value)} style={bigInputStyle}>{branches.map(b => <option key={b} value={b}>{b}</option>)}</select></div>
+              <div><label style={{ fontSize: 'clamp(1rem, 2vw, 1.8rem)', color: '#cbd5f5', display: 'block', marginBottom: '10px' }}>Cycle</label><select value={cycle} onChange={e => setCycle(e.target.value)} style={bigInputStyle}><option value="Odd">Odd (Sem 1,3,5,7)</option><option value="Even">Even (Sem 2,4,6,8)</option></select></div>
+              <div><label style={{ fontSize: 'clamp(1rem, 2vw, 1.8rem)', color: '#cbd5f5', display: 'block', marginBottom: '10px' }}>Semester</label><select value={currentSem} onChange={e => setCurrentSem(parseInt(e.target.value))} style={bigInputStyle}>{semesterOptions.map(s => <option key={s} value={s}>Sem {s}</option>)}</select></div>
+              <div><label style={{ fontSize: 'clamp(1rem, 2vw, 1.8rem)', color: '#cbd5f5', display: 'block', marginBottom: '10px' }}>Sections</label><select value={numSections} onChange={e => setNumSections(parseInt(e.target.value))} style={bigInputStyle}>{[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n} Sections</option>)}</select></div>
             </div>
-            <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-end' }}><button style={{ ...largeBtnStyle, background: '#3b82f6', color: 'white' }} onClick={() => setStep(2)}>Next Step →</button></div>
+            <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-end', paddingTop: '20px' }}><button style={{ ...largeBtnStyle, background: '#3b82f6', color: 'white' }} onClick={() => setStep(2)}>Next Step →</button></div>
           </div>
         )}
 
         {step === 2 && (
           <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <h2 style={{ fontSize: '3rem', marginBottom: '30px' }}>Step 2: Curriculum Setup (Sem {currentSem})</h2>
-            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '20px', marginBottom: '20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 120px', gap: '20px', alignItems: 'end' }}>
-                <div><label style={{ color: '#cbd5f5', display: 'block', marginBottom: '8px', fontSize: '1rem' }}>Subject Name</label><input style={{ ...bigInputStyle, padding: '12px', fontSize: '1.1rem' }} value={tempSubName} onChange={e => setTempSubName(e.target.value)} /></div>
-                <div><label style={{ color: '#cbd5f5', display: 'block', marginBottom: '8px', fontSize: '1rem' }}>Type</label><select style={{ ...bigInputStyle, padding: '12px', fontSize: '1.1rem' }} value={tempSubType} onChange={e => setTempSubType(e.target.value)}><option value="Lecture">Lecture</option><option value="Lab">Lab</option></select></div>
-                <div><label style={{ color: '#cbd5f5', display: 'block', marginBottom: '8px', fontSize: '1rem' }}>Hours</label><input style={{ ...bigInputStyle, padding: '12px', fontSize: '1.1rem' }} type="number" value={tempSubHours} onChange={e => setTempSubHours(e.target.value)} /></div>
-                <button style={{ ...largeBtnStyle, background: '#10b981', color: 'white', height: '54px', padding: '0', display: 'flex', justifyContent: 'center', fontSize: '1.2rem' }} onClick={handleCreateSubject}>Add</button>
+            <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 3rem)', marginBottom: 'clamp(15px, 2vw, 30px)' }}>Step 2: Curriculum (Sem {currentSem})</h2>
+            <div style={{ background: 'rgba(0,0,0,0.2)', padding: 'clamp(12px, 2vw, 20px)', borderRadius: 'clamp(12px, 2vw, 20px)', marginBottom: '15px' }}>
+              <div className="form-grid-2col" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 'clamp(10px, 1.5vw, 20px)', alignItems: 'end' }}>
+                <div><label style={{ color: '#cbd5f5', display: 'block', marginBottom: '6px', fontSize: 'clamp(0.8rem, 1.2vw, 1rem)' }}>Subject Name</label><input style={{ ...bigInputStyle, padding: '10px', fontSize: 'clamp(0.9rem, 1.3vw, 1.1rem)' }} value={tempSubName} onChange={e => setTempSubName(e.target.value)} /></div>
+                <div><label style={{ color: '#cbd5f5', display: 'block', marginBottom: '6px', fontSize: 'clamp(0.8rem, 1.2vw, 1rem)' }}>Type</label><select style={{ ...bigInputStyle, padding: '10px', fontSize: 'clamp(0.9rem, 1.3vw, 1.1rem)' }} value={tempSubType} onChange={e => setTempSubType(e.target.value)}><option value="Lecture">Lecture</option><option value="Lab">Lab</option></select></div>
+                <div><label style={{ color: '#cbd5f5', display: 'block', marginBottom: '6px', fontSize: 'clamp(0.8rem, 1.2vw, 1rem)' }}>Hrs</label><input style={{ ...bigInputStyle, padding: '10px', fontSize: 'clamp(0.9rem, 1.3vw, 1.1rem)' }} type="number" value={tempSubHours} onChange={e => setTempSubHours(e.target.value)} /></div>
+                <button style={{ ...largeBtnStyle, background: '#10b981', color: 'white', height: '46px', padding: '0 15px', display: 'flex', justifyContent: 'center' }} onClick={handleCreateSubject}>Add</button>
               </div>
             </div>
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {subjects.map((sub, idx) => (
-                <div key={idx} style={{ background: 'rgba(255,255,255,0.05)', padding: '15px 25px', borderRadius: '15px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <strong style={{ fontSize: '1.8rem' }}>
+                <div key={idx} style={{ background: 'rgba(255,255,255,0.05)', padding: 'clamp(10px, 1.5vw, 15px) clamp(12px, 2vw, 25px)', borderRadius: 'clamp(10px, 1.5vw, 15px)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap' }}>
+                    <strong style={{ fontSize: 'clamp(1rem, 2vw, 1.8rem)' }}>
                       {sub.name}, {sub.type}
-                      {sub.teachers.length > 0 && <span style={{ fontSize: '1.4rem', fontWeight: '400', color: '#cbd5f5', marginLeft: '10px' }}>({sub.teachers.join(', ')})</span>}
+                      {sub.teachers.length > 0 && <span style={{ fontSize: 'clamp(0.85rem, 1.5vw, 1.4rem)', fontWeight: '400', color: '#cbd5f5', marginLeft: '8px' }}>({sub.teachers.join(', ')})</span>}
                     </strong>
-                    <button onClick={() => { const u = subjects.filter((_, i) => i !== idx); setSubjects(u) }} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem' }}>Remove</button>
+                    <button onClick={() => { const u = subjects.filter((_, i) => i !== idx); setSubjects(u) }} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: 'clamp(0.85rem, 1.2vw, 1.1rem)' }}>Remove</button>
                   </div>
-                  <div style={{ display: 'flex', gap: '15px' }}>
-                    <input id={`t-input-${idx}`} placeholder="Add Teacher..." style={{ ...bigInputStyle, padding: '10px', fontSize: '1rem', width: '250px' }} />
-                    <button style={{ ...largeBtnStyle, padding: '10px 20px', fontSize: '1.2rem', height: '46px' }} onClick={() => handleAddTeacherToSubject(idx)}>+</button>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <input id={`t-input-${idx}`} placeholder="Add Teacher..." style={{ ...bigInputStyle, padding: '8px', fontSize: 'clamp(0.85rem, 1.2vw, 1rem)', flex: 1 }} />
+                    <button style={{ ...largeBtnStyle, padding: '8px 16px', height: '40px' }} onClick={() => handleAddTeacherToSubject(idx)}>+</button>
                   </div>
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'space-between' }}><button style={{ ...largeBtnStyle, background: 'rgba(255,255,255,0.1)' }} onClick={() => setStep(1)}>Back</button><button style={{ ...largeBtnStyle, background: '#3b82f6', color: 'white' }} onClick={handleSaveSemester}>Save Semester</button></div>
+            <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'space-between' }}><button style={{ ...largeBtnStyle, background: 'rgba(255,255,255,0.1)' }} onClick={() => setStep(1)}>Back</button><button style={{ ...largeBtnStyle, background: '#3b82f6', color: 'white' }} onClick={handleSaveSemester}>Save Semester</button></div>
           </div>
         )}
 
         {step === 3 && !showSuccess && (
           <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px' }}><h2 style={{ fontSize: '3rem' }}>Draft Dashboard</h2><button onClick={handleClearAll} style={{ ...largeBtnStyle, background: '#ef4444', color: 'white', fontSize: '1.4rem' }}>Clear All</button></div>
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '30px' }}>
+            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'clamp(20px, 3vw, 40px)', flexWrap: 'wrap', gap: '10px' }}><h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 3rem)' }}>Draft Dashboard</h2><button onClick={handleClearAll} style={{ ...largeBtnStyle, background: '#ef4444', color: 'white' }}>Clear All</button></div>
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 'clamp(15px, 2vw, 30px)' }}>
               {allSemesterData.map((sem, idx) => (
-                <div key={idx} style={{ background: 'rgba(255,255,255,0.05)', padding: '35px', borderRadius: '25px', cursor: 'pointer' }} onClick={() => { setEditIndex(idx); setBranch(sem.branch); setCurrentSem(sem.semester); setNumSections(sem.sections); setSubjects(sem.courses); setStep(2); }}>
-                  <strong style={{ fontSize: '2.5rem' }}>{sem.branch} - Sem {sem.semester}</strong>
-                  <p style={{ color: '#94a3b8' }}>{sem.sections} Sections • {sem.courses.length} Subjects</p>
+                <div className="draft-card" key={idx} style={{ background: 'rgba(255,255,255,0.05)', padding: 'clamp(18px, 3vw, 35px)', borderRadius: 'clamp(15px, 2vw, 25px)', cursor: 'pointer' }} onClick={() => { setEditIndex(idx); setBranch(sem.branch); setCurrentSem(sem.semester); setNumSections(sem.sections); setSubjects(sem.courses); setStep(2); }}>
+                  <strong style={{ fontSize: 'clamp(1.3rem, 2.5vw, 2.5rem)' }}>{sem.branch} - Sem {sem.semester}</strong>
+                  <p style={{ color: '#94a3b8', fontSize: 'clamp(0.85rem, 1.3vw, 1rem)' }}>{sem.sections} Sections • {sem.courses.length} Subjects</p>
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: '40px', display: 'flex', gap: '30px' }}><button style={{ ...largeBtnStyle, background: 'rgba(255,255,255,0.1)', flex: 1 }} onClick={() => setStep(1)}>+ Add Semester</button><button style={{ ...largeBtnStyle, background: '#10b981', color: 'white', flex: 2, justifyContent: 'center' }} onClick={handleGenerate} disabled={isGenerating}>{isGenerating ? "Generating..." : "🚀 Generate All"}</button></div>
+            <div className="btn-group" style={{ marginTop: '30px', display: 'flex', gap: 'clamp(15px, 2vw, 30px)' }}><button style={{ ...largeBtnStyle, background: 'rgba(255,255,255,0.1)', flex: 1 }} onClick={() => setStep(1)}>+ Add Semester</button><button style={{ ...largeBtnStyle, background: '#10b981', color: 'white', flex: 2, justifyContent: 'center' }} onClick={handleGenerate} disabled={isGenerating}>{isGenerating ? "Generating..." : "🚀 Generate All"}</button></div>
           </div>
         )}
 
         {step === 3 && showSuccess && (
           <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ fontSize: '6rem', marginBottom: '30px' }}>🎉</div>
-            <h2 style={{ fontSize: '3.5rem', marginBottom: '20px', background: 'linear-gradient(to right, #34d399, #10b981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Timetable Generated!</h2>
-            <p style={{ fontSize: '1.4rem', color: '#cbd5f5', marginBottom: '50px' }}>The optimization engine has successfully created the schedule.</p>
-            <div style={{ display: 'flex', gap: '30px' }}>
-              <button onClick={handleContinue} style={{ ...largeBtnStyle, background: '#3b82f6', color: 'white' }}>✏️ Continue Editing</button>
-              <button onClick={() => setViewAllMode(true)} style={{ ...largeBtnStyle, background: '#10b981', color: 'white' }}>👁 View Full Schedule</button>
+            <div style={{ fontSize: 'clamp(3rem, 5vw, 6rem)', marginBottom: '20px' }}>🎉</div>
+            <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 3.5rem)', marginBottom: '15px', background: 'linear-gradient(to right, #34d399, #10b981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textAlign: 'center' }}>Timetable Generated!</h2>
+            <p style={{ fontSize: 'clamp(0.9rem, 1.5vw, 1.4rem)', color: '#cbd5f5', marginBottom: 'clamp(25px, 4vw, 50px)', textAlign: 'center' }}>The optimization engine has successfully created the schedule.</p>
+            <div className="btn-group" style={{ display: 'flex', gap: 'clamp(15px, 2vw, 30px)', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button onClick={handleContinue} style={{ ...largeBtnStyle, background: '#3b82f6', color: 'white' }}>✏️ Continue</button>
+              <button onClick={() => setViewAllMode(true)} style={{ ...largeBtnStyle, background: '#10b981', color: 'white' }}>👁 View Schedule</button>
               <button onClick={handleClearAll} style={{ ...largeBtnStyle, background: 'rgba(255,255,255,0.1)', color: 'white' }}>Start New</button>
             </div>
           </div>
