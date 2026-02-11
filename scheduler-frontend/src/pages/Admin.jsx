@@ -39,6 +39,17 @@ const Admin = () => {
   const [viewAllMode, setViewAllMode] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // CHECK FOR EXISTING DATA ON MOUNT
+  const [hasExistingData, setHasExistingData] = useState(false);
+  useEffect(() => {
+    fetch('/data.json')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.name === "University") setHasExistingData(true);
+      })
+      .catch(() => setHasExistingData(false));
+  }, []);
+
   // FORM INPUTS
   const branches = ["CS", "CY", "CI", "CD", "IS", "AS", "BT", "CH", "CV", "EC", "EE", "EI", "ET", "IM", "ME"];
   const [branch, setBranch] = useState('CS');
@@ -199,9 +210,76 @@ const Admin = () => {
     } catch (err) { alert("Connection Error: Engine server not responding."); } finally { setIsGenerating(false); }
   };
 
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
+    if (!window.confirm("Are you sure? This will DELETE the entire schedule from the server.")) return;
+
+    try {
+      await fetch('http://localhost:5000/api/system-reset', { method: 'DELETE' });
+    } catch (e) { console.error("Reset failed", e); }
+
     localStorage.removeItem('adminDraft'); localStorage.removeItem('adminSuccess');
-    setAllSemesterData([]); setShowSuccess(false); setStep(1);
+    setAllSemesterData([]); setShowSuccess(false); setStep(1); setViewAllMode(false);
+    setHasExistingData(false);
+  };
+
+  const reconstructAndLoad = (mode = 'VIEW') => {
+    fetch('/data.json')
+      .then(res => res.json())
+      .then(data => {
+        if (!data || !data.children) return alert("Invalid Data Format");
+
+        const reconstructed = [];
+        data.children.forEach(branchNode => {
+          if (branchNode.type !== 1) return;
+          const branchName = branchNode.name;
+          branchNode.children.forEach(semNode => {
+            if (semNode.type !== 2) return;
+            const semName = semNode.name; // "Semester_1"
+            const semesterNum = parseInt(semName.split('_')[1]);
+            const sectionCount = semNode.children ? semNode.children.length : 0;
+
+            reconstructed.push({
+              branch: branchName,
+              semester: semesterNum,
+              sections: sectionCount,
+              cycle: semesterNum % 2 !== 0 ? 'Odd' : 'Even',
+              courses: []
+            });
+          });
+        });
+
+        if (reconstructed.length === 0) return alert("No schedule data found on server.");
+
+        setAllSemesterData(reconstructed);
+        localStorage.setItem('adminDraft', JSON.stringify(reconstructed));
+
+        if (mode === 'EDIT') {
+          setStep(3);
+          setViewAllMode(false);
+          setShowSuccess(false);
+        } else {
+          setViewAllMode(true);
+        }
+      })
+      .catch(err => alert("Failed to load data: " + err));
+  };
+
+  const handleViewMaster = () => {
+    if (allSemesterData.length > 0) {
+      setViewAllMode(true);
+    } else {
+      reconstructAndLoad('VIEW');
+    }
+  };
+
+  const handleContinue = () => {
+    if (allSemesterData.length > 0) {
+      setStep(3);
+      setViewAllMode(false);
+      setShowSuccess(false);
+    } else {
+      reconstructAndLoad('EDIT');
+    }
   };
 
   if (!isAuthenticated) {
@@ -237,22 +315,69 @@ const Admin = () => {
         </div>
         <div style={glassContainerStyle}>
           <div style={{ overflowY: 'auto', height: '100%', paddingRight: '20px' }}>
-            {allSemesterData.map((sem, i) => (
+            {/* IF NO DRAFT DATA, BUT WE HAVE SERVER DATA, WE SHOULD FETCH & DISPLAY THE SERVER DATA INSTEAD OF EMPTY DRAFT */}
+            {(allSemesterData.length > 0 ? allSemesterData : [{ branch: 'View', semester: 'Master', sections: 1 }]).map((sem, i) => (
               <div key={i}>
-                {Array.from({ length: sem.sections }).map((_, secIdx) => {
-                  const secLetter = String.fromCharCode(65 + secIdx);
-                  return (
-                    <div key={secLetter} className="formal-pdf-page" style={{ height: 'auto', minHeight: '85vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderBottom: '2px dashed rgba(255,255,255,0.1)', marginBottom: '100px', paddingBottom: '60px', background: 'transparent' }}>
-                      <div style={{ marginBottom: '30px' }}>
-                        <span style={{ fontSize: '2.2rem', color: '#94a3b8', display: 'block', marginBottom: '10px' }}>{sem.branch} • Semester {sem.semester}</span>
-                        <h3 style={{ fontSize: '4.5rem', color: '#60a5fa', margin: 0 }}>Section {secLetter}</h3>
+                {/* 
+                    HACK FOR MVP: If 'allSemesterData' is empty (cleared) but 'hasExistingData' is true, 
+                    TimetableGrid will fetch 'data.json' internally anyway.
+                    We just need to render *something* to trigger TimetableGrid.
+                    However, TimetableGrid needs Branch/Sem/Sec to navigate the tree.
+                    If we don't have that metadata in 'allSemesterData', we can't easily auto-generate the view 
+                    unless we parse data.json here.
+                    
+                    Better approach: Just let TimetableGrid handle it? 
+                    Actually, TimetableGrid takes props `branch`, `semester`, `section`. 
+                    If we don't know them (because we cleared local storage), we might not be able to render specific sections.
+                    
+                    WAIT: The user wants to "VIEW MASTER DATA". TimetableGrid component logic is:
+                    fetch data.json -> traverse tree.
+                    
+                    If we want to display the *entire* schedule, we need to know the structure (Branches, Sems, Sections).
+                    That structure is usually in `allSemesterData`.
+                    If the user CLEARED local storage, we lost the structure map.
+                    
+                    Options:
+                    1. Re-construct structure from data.json (harder).
+                    2. Just show a "Search/Explorer" view instead of iterating sections?
+                    3. Assume simple defaults or fetch structure from server?
+                    
+                    Let's assume for now the user hasn't cleared the *backend* json, avoiding complexity.
+                    But if they cleared *local* storage, `allSemesterData` is empty.
+                    
+                    Let's update logic: 
+                    If master data exists, provide a button that opens a "School Explorer" or uses `generateCInput` logic?
+                    
+                    Actually, `TimetableGrid` is designed to show a specific section.
+                    
+                    Let's try to just read the `data.json` structure in the `useEffect` and populate `allSemesterData` if it's empty?
+                    That would be robust.
+                */}
+                {allSemesterData.length > 0 ? (
+                  Array.from({ length: sem.sections }).map((_, secIdx) => {
+                    const secLetter = String.fromCharCode(65 + secIdx);
+                    return (
+                      <div key={secLetter} className="formal-pdf-page" style={{ height: 'auto', minHeight: '85vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderBottom: '2px dashed rgba(255,255,255,0.1)', marginBottom: '100px', paddingBottom: '60px', background: 'transparent' }}>
+                        <div style={{ marginBottom: '30px' }}>
+                          <span style={{ fontSize: '2.2rem', color: '#94a3b8', display: 'block', marginBottom: '10px' }}>{sem.branch} • Semester {sem.semester}</span>
+                          <h3 style={{ fontSize: '4.5rem', color: '#60a5fa', margin: 0 }}>Section {secLetter}</h3>
+                        </div>
+                        <div style={{ width: '100%', overflowX: 'auto' }}>
+                          <TimetableGrid role="STUDENT" branch={sem.branch} semester={sem.semester} section={`Sec_${secLetter}`} key={Date.now()} />
+                        </div>
                       </div>
-                      <div style={{ width: '100%', overflowX: 'auto' }}>
-                        <TimetableGrid role="STUDENT" branch={sem.branch} semester={sem.semester} section={`Sec_${secLetter}`} key={Date.now()} />
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <div style={{ textAlign: 'center', marginTop: '50px' }}>
+                    <h2>Metadata missing from local storage.</h2>
+                    <p>Showing raw data unavailable without structure.</p>
+                    {/* 
+                           We can implement a quick 'Restore' here if needed, 
+                           but for now let's focus on the Buttons in Step 1.
+                        */}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -261,22 +386,8 @@ const Admin = () => {
     );
   }
 
-  if (step === 3 && showSuccess) {
-    return (
-      <div style={pageStyle}>
-        <div style={glassContainerStyle}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-            <div style={{ fontSize: '12rem', marginBottom: '40px' }}>🎉</div>
-            <h1 style={{ fontSize: '6rem', fontWeight: '900', color: '#4ade80', marginBottom: '30px' }}>Timetable Generated!</h1>
-            <div style={{ display: 'flex', gap: '50px' }}>
-              <button style={{ ...largeBtnStyle, background: '#3b82f6', color: 'white', padding: '30px 70px', fontSize: '2rem' }} onClick={() => setViewAllMode(true)}>📅 View Master Schedule</button>
-              <button style={{ ...largeBtnStyle, background: 'transparent', border: '3px solid rgba(255,255,255,0.2)', color: '#cbd5f5', padding: '30px 70px', fontSize: '2rem' }} onClick={() => { setShowSuccess(false); localStorage.removeItem('adminSuccess'); }}>⚙️ Configure More</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // --- RECONSTRUCT DATA FROM JSON FUNCTION ---
+  // (We'll implement this properly later if needed, for now focus on the UI buttons)
 
   return (
     <div style={pageStyle}>
@@ -285,10 +396,40 @@ const Admin = () => {
         <button style={{ ...largeBtnStyle, background: 'rgba(255,255,255,0.1)', color: '#cbd5f5' }} onClick={() => navigate('/')}>🏠 Home</button>
       </div>
 
+
+
       <div style={glassContainerStyle}>
+
+        {/* NEW: DASHBOARD HEADER IF DATA EXISTS */}
+        {hasExistingData && step === 1 && (
+          <div style={{ marginBottom: '40px', padding: '30px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '25px', border: '1px solid rgba(16, 185, 129, 0.3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ fontSize: '2.5rem', color: '#34d399', margin: 0 }}>📅 Existing Schedule Found</h2>
+              <p style={{ color: '#ecfdf5', fontSize: '1.2rem', margin: '5px 0 0 0' }}>Master Timetable is active.</p>
+            </div>
+            <div style={{ display: 'flex', gap: '20px' }}>
+              <button onClick={handleContinue} style={{ ...largeBtnStyle, background: '#3b82f6', color: 'white', padding: '15px 30px', fontSize: '1.3rem' }}>
+                ✏️ Continue Editing
+              </button>
+              <button onClick={handleViewMaster} style={{ ...largeBtnStyle, background: '#10b981', color: 'white', padding: '15px 30px', fontSize: '1.3rem' }}>
+                👁 View Master Data
+              </button>
+              <button onClick={handleClearAll} style={{ ...largeBtnStyle, background: '#ef4444', color: 'white', padding: '15px 30px', fontSize: '1.3rem' }}>
+                🗑 Clear All & Restart
+              </button>
+            </div>
+          </div>
+        )}
+
         {step === 1 && (
           <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <h2 style={{ fontSize: '3rem', marginBottom: '40px' }}>Step 1: Academy Configuration</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <h2 style={{ fontSize: '3rem', marginBottom: '40px' }}>Step 1: Academy Configuration</h2>
+              {/* Fallback Clear button if no data found but local storage has draft */}
+              {!hasExistingData && allSemesterData.length > 0 &&
+                <button onClick={handleClearAll} style={{ ...largeBtnStyle, background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', fontSize: '1.2rem', padding: '10px 20px', height: 'fit-content' }}>Reset Draft</button>
+              }
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '60px' }}>
               <div><label style={{ fontSize: '1.8rem', color: '#cbd5f5', display: 'block', marginBottom: '15px' }}>Branch</label><select value={branch} onChange={e => setBranch(e.target.value)} style={bigInputStyle}>{branches.map(b => <option key={b} value={b}>{b}</option>)}</select></div>
               <div><label style={{ fontSize: '1.8rem', color: '#cbd5f5', display: 'block', marginBottom: '15px' }}>Cycle</label><select value={cycle} onChange={e => setCycle(e.target.value)} style={bigInputStyle}><option value="Odd">Odd (Sem 1,3,5,7)</option><option value="Even">Even (Sem 2,4,6,8)</option></select></div>
@@ -343,6 +484,19 @@ const Admin = () => {
               ))}
             </div>
             <div style={{ marginTop: '40px', display: 'flex', gap: '30px' }}><button style={{ ...largeBtnStyle, background: 'rgba(255,255,255,0.1)', flex: 1 }} onClick={() => setStep(1)}>+ Add Semester</button><button style={{ ...largeBtnStyle, background: '#10b981', color: 'white', flex: 2, justifyContent: 'center' }} onClick={handleGenerate} disabled={isGenerating}>{isGenerating ? "Generating..." : "🚀 Generate All"}</button></div>
+          </div>
+        )}
+
+        {step === 3 && showSuccess && (
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ fontSize: '6rem', marginBottom: '30px' }}>🎉</div>
+            <h2 style={{ fontSize: '3.5rem', marginBottom: '20px', background: 'linear-gradient(to right, #34d399, #10b981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Timetable Generated!</h2>
+            <p style={{ fontSize: '1.4rem', color: '#cbd5f5', marginBottom: '50px' }}>The optimization engine has successfully created the schedule.</p>
+            <div style={{ display: 'flex', gap: '30px' }}>
+              <button onClick={handleContinue} style={{ ...largeBtnStyle, background: '#3b82f6', color: 'white' }}>✏️ Continue Editing</button>
+              <button onClick={() => setViewAllMode(true)} style={{ ...largeBtnStyle, background: '#10b981', color: 'white' }}>👁 View Full Schedule</button>
+              <button onClick={handleClearAll} style={{ ...largeBtnStyle, background: 'rgba(255,255,255,0.1)', color: 'white' }}>Start New</button>
+            </div>
           </div>
         )}
       </div>

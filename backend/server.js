@@ -263,4 +263,33 @@ app.get('/api/daily-overrides', (req, res) => {
     } catch (e) { res.json([]); }
 });
 
+// NEW: System Reset (Hard Clean)
+app.delete('/api/system-reset', (req, res) => {
+    console.log(">> [System] Performing Hard Reset...");
+    try {
+        const filesToDelete = [
+            path.join(C_FOLDER, 'data.json'),
+            path.join(C_FOLDER, 'config.txt'),
+            path.join(C_FOLDER, 'locked.txt'),
+            path.join(REACT_PUBLIC, 'data.json'),
+            DAILY_OVERRIDES_FILE
+        ];
+
+        filesToDelete.forEach(file => {
+            if (fs.existsSync(file)) {
+                fs.unlinkSync(file);
+                console.log(`   [✓] Deleted: ${path.basename(file)}`);
+            }
+        });
+
+        // Re-initialize overrides file
+        fs.writeFileSync(DAILY_OVERRIDES_FILE, JSON.stringify([]));
+
+        res.json({ success: true, message: "System Reset Complete." });
+    } catch (e) {
+        console.error("Reset Failed:", e);
+        res.status(500).json({ error: "Failed to reset system." });
+    }
+});
+
 app.listen(5000, () => console.log("Server running on port 5000"));
