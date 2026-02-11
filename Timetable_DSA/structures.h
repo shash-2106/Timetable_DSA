@@ -9,11 +9,11 @@
 #define MAX_DAYS 5
 #define MAX_SLOTS 8
 #define MAX_CHILDREN 20
-#define MAX_EXPERTISE 5
+#define MAX_EXPERTISE 30
 
 typedef struct {
   char name[50];
-  char expertise[MAX_EXPERTISE][10]; // List of subject codes they can teach
+  char expertise[MAX_EXPERTISE][50]; // List of subject codes they can teach
   int expertise_count;
 } Professor;
 

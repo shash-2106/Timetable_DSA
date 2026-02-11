@@ -159,9 +159,22 @@ void load_from_file(TreeNode *root, Queue *pipeline, const char *filename) {
     Professor *p = &b->branch_info->teachers[b->branch_info->teacher_count - 1];
 
     fscanf(f, "%d", &exp_count);
-    p->expertise_count = exp_count;
+    if (exp_count > MAX_EXPERTISE) {
+      printf(">> [Loader] WARNING: Teacher %s has %d expertise entries, "
+             "capping at %d\n",
+             name, exp_count, MAX_EXPERTISE);
+      fflush(stdout);
+    }
+    int actual_exp = exp_count < MAX_EXPERTISE ? exp_count : MAX_EXPERTISE;
+    p->expertise_count = actual_exp;
     for (int j = 0; j < exp_count; j++) {
-      fscanf(f, "%9s", p->expertise[j]);
+      if (j < MAX_EXPERTISE) {
+        fscanf(f, "%49s", p->expertise[j]);
+      } else {
+        // Read and discard excess expertise entries
+        char discard[100];
+        fscanf(f, "%99s", discard);
+      }
     }
   }
 
