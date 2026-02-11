@@ -22,6 +22,11 @@ bool is_teacher_busy(TreeNode *branch, char *name, int d, int s) {
   fflush(stdout);
 
   if (branch->type == SECTION_NODE) {
+    if (!branch->timetable) {
+      printf(">> [Check] ERR: Section %s has NULL timetable\n", branch->name);
+      fflush(stdout);
+      return false;
+    }
     if (branch->timetable->grid[d][s] &&
         strstr(branch->timetable->grid[d][s], name))
       return true;
