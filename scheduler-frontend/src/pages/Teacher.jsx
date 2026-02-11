@@ -151,7 +151,7 @@ const Teacher = () => {
         requester: teacherName
       };
 
-      const res = await fetch('http://localhost:5000/api/book-extra-slot', {
+      const res = await fetch('/api/book-extra-slot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -188,7 +188,7 @@ const Teacher = () => {
         requester: teacherName
       };
 
-      const res = await fetch('http://localhost:5000/api/swap-request', {
+      const res = await fetch('/api/swap-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

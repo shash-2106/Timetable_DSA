@@ -1,5 +1,16 @@
 {
-  "dependencies": {
-    "react-router-dom": "^7.12.0"
+  "name": "timetable-dsa",
+  "version": "1.0.0",
+  "description": "University Timetable Scheduling System",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../scheduler-frontend && npm install",
+    "build:c": "cd Timetable_DSA && gcc -o timetable_system main.c data_structures.c parser.c scheduler.c web_bridge.c -Wall -std=c99",
+    "build:frontend": "cd scheduler-frontend && npm run build",
+    "build": "npm run build:c && npm run build:frontend",
+    "start": "cd backend && node server.js",
+    "dev": "echo 'Run backend and frontend separately in development mode'"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

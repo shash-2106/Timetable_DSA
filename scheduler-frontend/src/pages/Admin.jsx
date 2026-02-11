@@ -199,7 +199,7 @@ const Admin = () => {
     setIsGenerating(true);
     const content = generateCInput(allSemesterData, branch);
     try {
-      const response = await fetch('http://localhost:5000/api/run-engine', {
+      const response = await fetch('/api/run-engine', {
         method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: content
       });
       const result = await response.json();
@@ -214,7 +214,7 @@ const Admin = () => {
     if (!window.confirm("Are you sure? This will DELETE the entire schedule from the server.")) return;
 
     try {
-      await fetch('http://localhost:5000/api/system-reset', { method: 'DELETE' });
+      await fetch('/api/system-reset', { method: 'DELETE' });
     } catch (e) { console.error("Reset failed", e); }
 
     localStorage.removeItem('adminDraft'); localStorage.removeItem('adminSuccess');

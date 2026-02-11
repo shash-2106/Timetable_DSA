@@ -12,6 +12,7 @@ app.use(express.json()); // To parse JSON bodies
 // PATHS (Adjust if your folder names are different)
 const C_FOLDER = path.join(__dirname, '../Timetable_DSA');
 const REACT_PUBLIC = path.join(__dirname, '../scheduler-frontend/public');
+const REACT_BUILD = path.join(__dirname, '../scheduler-frontend/dist');
 const DAILY_OVERRIDES_FILE = path.join(__dirname, 'daily_overrides.json');
 
 // Initialize Daily Overrides if not exists
@@ -288,5 +289,29 @@ app.delete('/api/system-reset', (req, res) => {
         res.status(500).json({ error: "Failed to reset system." });
     }
 });
+// --- PRODUCTION: Serve data.json from C_FOLDER ---
+app.get('/data.json', (req, res) => {
+    const dataPath = path.join(C_FOLDER, 'data.json');
+    if (fs.existsSync(dataPath)) {
+        res.setHeader('Cache-Control', 'no-cache');
+        res.sendFile(dataPath);
+    } else {
+        res.status(404).json({ error: 'No schedule generated yet.' });
+    }
+});
 
-app.listen(5000, () => console.log("Server running on port 5000"));
+// --- PRODUCTION: Serve React Build ---
+app.use(express.static(REACT_BUILD));
+
+// Catch-all: Send React index.html for client-side routing
+app.get('/{*path}', (req, res) => {
+    const indexPath = path.join(REACT_BUILD, 'index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).send('Frontend not built. Run: npm run build');
+    }
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
