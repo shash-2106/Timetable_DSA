@@ -5,7 +5,7 @@ export const generateCInput = (allSemesters, branchName) => {
     content += `${branchName}\n`;
 
     // 2. TEACHER EXPERTISE (Calculated automatically from assignments)
-    const teacherMap = {}; 
+    const teacherMap = {};
     allSemesters.forEach(sem => {
         sem.courses.forEach(course => {
             course.teachers.forEach(tName => {
@@ -27,18 +27,19 @@ export const generateCInput = (allSemesters, branchName) => {
 
     // 3. SEMESTER CONFIGURATION (Dynamic)
     // We send the Number of Active Semesters, then the ID of each.
-    content += `${allSemesters.length}\n`; 
+    content += `${allSemesters.length}\n`;
 
     allSemesters.forEach(sem => {
         // Write: Semester_ID Sections_Count Subject_Count
         content += `${sem.semester} ${sem.sections} ${sem.courses.length}\n`;
-        
+
         // Write: SubjectCode Hours
         if (sem.courses.length > 0) {
             sem.courses.forEach(c => {
                 const code = c.name.trim().replace(/\s+/g, '_');
                 const hours = c.hours || 4; // Default to 4 if not set
-                content += `${code} ${hours}\n`;
+                const type = c.type || "Lecture";
+                content += `${code} ${hours} ${type}\n`;
             });
         }
     });

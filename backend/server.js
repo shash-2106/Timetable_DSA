@@ -25,11 +25,12 @@ app.post('/api/run-engine', (req, res) => {
     }
 
     // 2. Run the C Engine
-    const exePath = path.join(C_FOLDER, 'timetable_system.exe');
+    const exeName = process.platform === 'win32' ? 'timetable_system.exe' : 'timetable_system';
+    const exePath = path.join(C_FOLDER, exeName);
     const command = `"${exePath}" config.txt`; // Pass config as argument
 
     console.log("   [+] Running C Engine...");
-    
+
     // Execute command inside the C Folder (so it finds config.txt)
     exec(command, { cwd: C_FOLDER }, (error, stdout, stderr) => {
         if (error) {

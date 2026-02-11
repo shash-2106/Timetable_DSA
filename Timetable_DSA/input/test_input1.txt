@@ -1,0 +1,24 @@
+1
+CS_Dept
+1 1 2
+1 2 1
+1
+CS_Building
+DSA_Batch
+CORE
+5
+0 0 3 Prof_A
+0 0 3 Prof_B
+0 0 3 Prof_C
+0 0 3 Prof_A
+0 0 3 Prof_B
+LABS
+4
+0 1 0 Prof_Lab1
+0 1 0 Prof_A
+0 1 0 Prof_Lab2
+0 1 0 Prof_B
+MATHS
+0
+DTL
+0

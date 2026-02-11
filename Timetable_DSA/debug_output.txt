@@ -1,0 +1,84 @@
+>> [System] CLI Mode Enabled. Loading config: input/test_stress.txt
+>> [Loader] Branch: CS_Dept
+>> [Loader] Reading 2 teachers...
+>> [Loader] Reading 1 semesters...
+>> [Loader] Configuration loaded successfully from input/test_stress.txt.
+Checking Prof_A for CS101 @ Day 3 Slot 0. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS101 (Prof_A) to Sec_A at Day 3 Slot 0
+Checking Prof_A for CS102 @ Day 1 Slot 0. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS102 (Prof_A) to Sec_A at Day 1 Slot 0
+Checking Prof_A for CS103 @ Day 2 Slot 0. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS103 (Prof_A) to Sec_A at Day 2 Slot 0
+Checking Prof_A for CS104 @ Day 3 Slot 0. Grid: OCCUPIED, TeacherBusy: 1
+Checking Prof_A for CS104 @ Day 3 Slot 1. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS104 (Prof_A) to Sec_A at Day 3 Slot 1
+Checking Prof_B for CS105 @ Day 4 Slot 0. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS105 (Prof_B) to Sec_A at Day 4 Slot 0
+Checking Prof_B for CS106 @ Day 2 Slot 0. Grid: OCCUPIED, TeacherBusy: 0
+Checking Prof_B for CS106 @ Day 2 Slot 1. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS106 (Prof_B) to Sec_A at Day 2 Slot 1
+Checking Prof_B for CS107 @ Day 3 Slot 0. Grid: OCCUPIED, TeacherBusy: 0
+Checking Prof_B for CS107 @ Day 3 Slot 1. Grid: OCCUPIED, TeacherBusy: 0
+Checking Prof_B for CS107 @ Day 3 Slot 3. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS107 (Prof_B) to Sec_A at Day 3 Slot 3
+Checking Prof_B for CS108 @ Day 2 Slot 0. Grid: OCCUPIED, TeacherBusy: 0
+Checking Prof_B for CS108 @ Day 2 Slot 1. Grid: OCCUPIED, TeacherBusy: 1
+Checking Prof_B for CS108 @ Day 2 Slot 3. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS108 (Prof_B) to Sec_A at Day 2 Slot 3
+Checking Prof_A for CS101 @ Day 0 Slot 0. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS101 (Prof_A) to Sec_A at Day 0 Slot 0
+Checking Prof_A for CS102 @ Day 2 Slot 0. Grid: OCCUPIED, TeacherBusy: 1
+Checking Prof_A for CS102 @ Day 2 Slot 1. Grid: OCCUPIED, TeacherBusy: 0
+Checking Prof_A for CS102 @ Day 2 Slot 3. Grid: OCCUPIED, TeacherBusy: 0
+Checking Prof_A for CS102 @ Day 2 Slot 4. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS102 (Prof_A) to Sec_A at Day 2 Slot 4
+Checking Prof_A for CS103 @ Day 4 Slot 0. Grid: OCCUPIED, TeacherBusy: 0
+Checking Prof_A for CS103 @ Day 4 Slot 1. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS103 (Prof_A) to Sec_A at Day 4 Slot 1
+Checking Prof_A for CS104 @ Day 4 Slot 0. Grid: OCCUPIED, TeacherBusy: 0
+Checking Prof_A for CS104 @ Day 4 Slot 1. Grid: OCCUPIED, TeacherBusy: 1
+Checking Prof_A for CS104 @ Day 4 Slot 3. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS104 (Prof_A) to Sec_A at Day 4 Slot 3
+Checking Prof_B for CS105 @ Day 0 Slot 0. Grid: OCCUPIED, TeacherBusy: 0
+Checking Prof_B for CS105 @ Day 0 Slot 1. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS105 (Prof_B) to Sec_A at Day 0 Slot 1
+Checking Prof_B for CS106 @ Day 2 Slot 0. Grid: OCCUPIED, TeacherBusy: 0
+Checking Prof_B for CS106 @ Day 2 Slot 1. Grid: OCCUPIED, TeacherBusy: 1
+Checking Prof_B for CS106 @ Day 2 Slot 3. Grid: OCCUPIED, TeacherBusy: 1
+Checking Prof_B for CS106 @ Day 2 Slot 4. Grid: OCCUPIED, TeacherBusy: 0
+Checking Prof_B for CS106 @ Day 2 Slot 6. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS106 (Prof_B) to Sec_A at Day 2 Slot 6
+Checking Prof_B for CS107 @ Day 2 Slot 0. Grid: OCCUPIED, TeacherBusy: 0
+Checking Prof_B for CS107 @ Day 2 Slot 1. Grid: OCCUPIED, TeacherBusy: 1
+Checking Prof_B for CS107 @ Day 2 Slot 3. Grid: OCCUPIED, TeacherBusy: 1
+Checking Prof_B for CS107 @ Day 2 Slot 4. Grid: OCCUPIED, TeacherBusy: 0
+Checking Prof_B for CS107 @ Day 2 Slot 6. Grid: OCCUPIED, TeacherBusy: 1
+Checking Prof_B for CS107 @ Day 2 Slot 7. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS107 (Prof_B) to Sec_A at Day 2 Slot 7
+Checking Prof_B for CS108 @ Day 1 Slot 0. Grid: OCCUPIED, TeacherBusy: 0
+Checking Prof_B for CS108 @ Day 1 Slot 1. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS108 (Prof_B) to Sec_A at Day 1 Slot 1
+Checking Prof_A for CS101 @ Day 3 Slot 0. Grid: OCCUPIED, TeacherBusy: 1
+Checking Prof_A for CS101 @ Day 3 Slot 1. Grid: OCCUPIED, TeacherBusy: 1
+Checking Prof_A for CS101 @ Day 3 Slot 3. Grid: OCCUPIED, TeacherBusy: 0
+Checking Prof_A for CS101 @ Day 3 Slot 4. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS101 (Prof_A) to Sec_A at Day 3 Slot 4
+Checking Prof_A for CS102 @ Day 0 Slot 0. Grid: OCCUPIED, TeacherBusy: 1
+Checking Prof_A for CS102 @ Day 0 Slot 1. Grid: OCCUPIED, TeacherBusy: 0
+Checking Prof_A for CS102 @ Day 0 Slot 3. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS102 (Prof_A) to Sec_A at Day 0 Slot 3
+Checking Prof_A for CS103 @ Day 3 Slot 0. Grid: OCCUPIED, TeacherBusy: 1
+Checking Prof_A for CS103 @ Day 3 Slot 1. Grid: OCCUPIED, TeacherBusy: 1
+Checking Prof_A for CS103 @ Day 3 Slot 3. Grid: OCCUPIED, TeacherBusy: 0
+Checking Prof_A for CS103 @ Day 3 Slot 4. Grid: OCCUPIED, TeacherBusy: 1
+Checking Prof_A for CS103 @ Day 3 Slot 6. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS103 (Prof_A) to Sec_A at Day 3 Slot 6
+Checking Prof_A for CS104 @ Day 4 Slot 0. Grid: OCCUPIED, TeacherBusy: 0
+Checking Prof_A for CS104 @ Day 4 Slot 1. Grid: OCCUPIED, TeacherBusy: 1
+Checking Prof_A for CS104 @ Day 4 Slot 3. Grid: OCCUPIED, TeacherBusy: 1
+Checking Prof_A for CS104 @ Day 4 Slot 4. Grid: NULL, TeacherBusy: 0
+>> ASSIGNED: CS104 (Prof_A) to Sec_A at Day 4 Slot 4
+
+>> [Solver] Successfully generated all timetables.
+
+>> [Export] Master data (Teachers + All Section Grids) saved to data.json
