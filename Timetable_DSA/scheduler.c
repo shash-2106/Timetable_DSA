@@ -88,6 +88,9 @@ bool solve_branch_timetable(TreeNode *root, Queue *pipeline,
   int max_placements = total * 2; /* labs occupy 2 slots each */
   Placement *undo_stack =
       (Placement *)malloc(max_placements * sizeof(Placement));
+  printf(">> [Solver] Allocated undo stack for %d placements.\n",
+         max_placements);
+  fflush(stdout);
 
   /* Usable slot indices (breaks at 2 and 5 are skipped) */
   int avail_slots[] = {0, 1, 3, 4, 6, 7};
@@ -98,6 +101,10 @@ bool solve_branch_timetable(TreeNode *root, Queue *pipeline,
   bool success = false;
 
   for (int attempt = 0; attempt < MAX_ATTEMPTS && !success; attempt++) {
+    printf(">> [Solver] Starting attempt %d/%d...\n", attempt + 1,
+           MAX_ATTEMPTS);
+    fflush(stdout);
+
     int undo_top = 0; /* stack pointer */
     bool failed = false;
 
@@ -114,6 +121,9 @@ bool solve_branch_timetable(TreeNode *root, Queue *pipeline,
       ScheduleRequest req = reqs[r];
       bool placed = false;
       bool is_lab = (strcasecmp(req.type, "Lab") == 0);
+
+      // printf(">> [Solver]   Processing Req %d/%d: %s (%s)\n", r+1, total,
+      // req.course_code, req.type); fflush(stdout);
 
       /* Shuffle days per request for variety */
       int days[] = {0, 1, 2, 3, 4};
@@ -134,6 +144,15 @@ bool solve_branch_timetable(TreeNode *root, Queue *pipeline,
           for (int si = 0; si < 6 && !placed; si++) {
             int d = days[di];
             int s = avail_slots[si];
+            // Safety check for grid
+            if (!req.target_section || !req.target_section->timetable) {
+              printf(">> [Solver] CRITICAL: Invalid section or timetable for "
+                     "req %s\n",
+                     req.course_code);
+              fflush(stdout);
+              failed = true;
+              break;
+            }
 
             if (is_lab) {
               /* Labs need 2 consecutive slots; skip invalid start positions */
