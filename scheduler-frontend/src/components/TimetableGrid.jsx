@@ -145,8 +145,9 @@ const TimetableGrid = ({ role, branch, semester, section, teacherQuery, onBack }
               console.log(`Scanning Cell: '${subject}'`); // DEBUG raw cell
 
               // Cell format: "Subject (Teacher)"
-              const match = subject.match(/\(([^)]+)\)$/);
-              const assignedTeacher = match ? match[1] : "";
+              // Cell format: "Subject (Type)\nTeacher"
+              const parts = subject.split('\n');
+              const assignedTeacher = parts.length > 1 ? parts[1] : "";
 
               console.log(`   -> Extracted Teacher: '${assignedTeacher}'`); // DEBUG regex result
 

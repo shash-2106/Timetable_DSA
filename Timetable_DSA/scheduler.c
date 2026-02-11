@@ -159,3 +159,38 @@ void display_section_timetable(TreeNode *root, char *b_name, char *sec_name) {
     display_section_timetable(root->children[i], b_name, sec_name);
   }
 }
+
+// Returns:
+// 0: Success
+// 1: Slot Not Free
+// 2: Teacher Busy
+// 3: Invalid Slot (Break) or Out of Bounds
+int validate_and_assign_temporary_slot(TreeNode *college_root,
+                                       TreeNode *target_section,
+                                       char *course_code, char *type,
+                                       char *teacher_name, int day, int slot) {
+  // 0. Check Bounds and Breaks
+  if (day < 0 || day >= MAX_DAYS || slot < 0 || slot >= MAX_SLOTS)
+    return 3;
+  if (slot == 2 || slot == 5)
+    return 3; // Break Slots
+
+  // 1. Check if Slot is Free
+  if (target_section->timetable->grid[day][slot] != NULL) {
+    // Allow overwriting if it's the SAME entry? No, strictly "Not Free" for
+    // now.
+    return 1;
+  }
+
+  // 2. Check if Teacher is Busy (Global Tree Traversal)
+  if (is_teacher_busy(college_root, teacher_name, day, slot)) {
+    return 2;
+  }
+
+  // 3. Assign
+  char entry[100];
+  sprintf(entry, "%s (%s)\n%s", course_code, type, teacher_name);
+  target_section->timetable->grid[day][slot] = strdup(entry);
+
+  return 0;
+}

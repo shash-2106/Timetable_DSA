@@ -83,5 +83,12 @@ bool solve_branch_timetable(TreeNode *root, Queue *pipeline,
 void display_section_timetable(TreeNode *root, char *branch, char *section);
 void export_to_json(TreeNode *root, const char *filename);
 void get_teacher_view(TreeNode *node, char *name, char *parent_name);
+void load_locks(TreeNode *root, const char *filename);
+void prune_pipeline(TreeNode *root, Queue *pipeline);
+TreeNode *find_child_by_name(TreeNode *parent, const char *name, NodeType type);
+int validate_and_assign_temporary_slot(TreeNode *college_root,
+                                       TreeNode *target_section,
+                                       char *course_code, char *type,
+                                       char *teacher_name, int day, int slot);
 
 #endif

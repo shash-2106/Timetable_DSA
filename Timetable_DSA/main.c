@@ -7,17 +7,69 @@ int main(int argc, char *argv[]) {
   SolverHistory history = {0};
 
   // Check for CLI argument (config file)
+  // Check for CLI argument
   if (argc > 1) {
+    if (strcmp(argv[1], "validate") == 0) {
+      // Usage: ./exe validate config locked branch sem sec day slot sub type
+      // teacher
+      if (argc < 12) {
+        fprintf(stderr, "Invalid arguments for validate mode.\n");
+        return 3;
+      }
+
+      load_from_file(college_root, pipeline, argv[2]);
+      load_locks(college_root, argv[3]); // Load existing state
+
+      // Parse Args
+      char *branch = argv[4];
+      char *sem = argv[5];
+      char *sec = argv[6];
+      int day = atoi(argv[7]);
+      int slot = atoi(argv[8]);
+      char *sub = argv[9];
+      char *type = argv[10];
+      char *teacher = argv[11];
+
+      // Navigate to target section
+      TreeNode *b_node = find_child_by_name(college_root, branch, BRANCH_NODE);
+      TreeNode *s_node =
+          b_node ? find_child_by_name(b_node, sem, SEMESTER_NODE) : NULL;
+      TreeNode *sec_node =
+          s_node ? find_child_by_name(s_node, sec, SECTION_NODE) : NULL;
+
+      if (!sec_node) {
+        fprintf(stderr, "Target section not found.\n");
+        return 3;
+      }
+
+      int result = validate_and_assign_temporary_slot(
+          college_root, sec_node, sub, type, teacher, day, slot);
+
+      if (result == 0) {
+        export_to_json(college_root, "data.json");
+        printf("Success\n");
+        return 0;
+      } else {
+        return result; // 1, 2, or 3
+      }
+    }
+
     printf(">> [System] CLI Mode Enabled. Loading config: %s\n", argv[1]);
     load_from_file(college_root, pipeline, argv[1]);
 
-    if (solve_branch_timetable(college_root, pipeline, &history))
-      printf("\n>> [Solver] Successfully generated all timetables.\n");
-    else
-      printf("\n>> [Solver] Failed to generate complete timetable.\n");
+    // NEW: Load existing locks and remove satisfied requests
+    load_locks(college_root, "locked.txt");
+    prune_pipeline(college_root, pipeline);
 
-    export_to_json(college_root, "data.json");
-    return 0; // Exit after processing
+    if (solve_branch_timetable(college_root, pipeline, &history)) {
+      printf("\n>> [Solver] Successfully generated all timetables.\n");
+      export_to_json(college_root, "data.json");
+      return 0;
+    } else {
+      fprintf(stderr,
+              ">> [Solver] Failed: Slots full or constraints violated.\n");
+      return 1;
+    }
   }
 
   while (1) {
