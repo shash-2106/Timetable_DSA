@@ -149,7 +149,13 @@ void load_from_file(TreeNode *root, Queue *pipeline, const char *filename) {
   fflush(stdout);
 
   for (int i = 0; i < t_count; i++) {
+    printf(">> [Loader] Reading teacher %d/%d...\n", i + 1, t_count);
+    fflush(stdout);
+
     fscanf(f, "%99s", name);
+    printf(">> [Loader]   Name: %s\n", name);
+    fflush(stdout);
+
     add_teacher_to_branch(b, name);
 
     // Safety check: ensure we actually added a teacher
@@ -159,6 +165,9 @@ void load_from_file(TreeNode *root, Queue *pipeline, const char *filename) {
     Professor *p = &b->branch_info->teachers[b->branch_info->teacher_count - 1];
 
     fscanf(f, "%d", &exp_count);
+    printf(">> [Loader]   Expertise count: %d\n", exp_count);
+    fflush(stdout);
+
     if (exp_count > MAX_EXPERTISE) {
       printf(">> [Loader] WARNING: Teacher %s has %d expertise entries, "
              "capping at %d\n",
@@ -176,6 +185,8 @@ void load_from_file(TreeNode *root, Queue *pipeline, const char *filename) {
         fscanf(f, "%99s", discard);
       }
     }
+    printf(">> [Loader]   Teacher %s loaded OK\n", name);
+    fflush(stdout);
   }
 
   // 3. Semesters
