@@ -194,21 +194,29 @@ void load_from_file(TreeNode *root, Queue *pipeline, const char *filename) {
   if (fscanf(f, "%d", &sem_count_total) != 1)
     return;
   printf(">> [Loader] Reading %d semesters...\n", sem_count_total);
+  fflush(stdout);
 
   for (int k = 0; k < sem_count_total; k++) {
     int sem_id, num_sections, num_courses;
     // Format: Semester_ID Sections_Count Subject_Count
     fscanf(f, "%d %d %d", &sem_id, &num_sections, &num_courses);
+    printf(">> [Loader] Sem %d: id=%d, sections=%d, courses=%d\n", k + 1,
+           sem_id, num_sections, num_courses);
+    fflush(stdout);
 
     char sem_label[20];
     sprintf(sem_label, "Semester_%d", sem_id);
     TreeNode *sem_node = add_semester_to_branch(b, sem_label);
+    printf(">> [Loader]   Semester node created\n");
+    fflush(stdout);
 
     TreeNode *sections[MAX_CHILDREN];
     for (int i = 0; i < num_sections; i++) {
       sprintf(name, "Sec_%c", 'A' + i);
       sections[i] = add_section_to_semester(sem_node, name);
     }
+    printf(">> [Loader]   %d sections created\n", num_sections);
+    fflush(stdout);
 
     // Subjects
     for (int j = 0; j < num_courses; j++) {
@@ -217,6 +225,9 @@ void load_from_file(TreeNode *root, Queue *pipeline, const char *filename) {
       int hours;
       // Format: SubjectCode Hours Type
       fscanf(f, "%49s %d %14s", sub_code, &hours, sub_type);
+      printf(">> [Loader]   Subject %d/%d: %s (%s) x%d hrs\n", j + 1,
+             num_courses, sub_code, sub_type, hours);
+      fflush(stdout);
 
       for (int i = 0; i < num_sections; i++) {
         // FIX: Enqueue multiple requests based on 'hours'
