@@ -3,7 +3,12 @@
 #include <time.h>
 
 bool is_qualified(Professor *p, char *sub_code) {
+  printf(">> [Check] Qualified? %s for %s (exp_count=%d)\n", p->name, sub_code,
+         p->expertise_count);
+  fflush(stdout);
   for (int i = 0; i < p->expertise_count; i++) {
+    if (i >= 30)
+      break; // Safety
     if (strcmp(p->expertise[i], sub_code) == 0)
       return true;
   }
@@ -13,14 +18,20 @@ bool is_qualified(Professor *p, char *sub_code) {
 bool is_teacher_busy(TreeNode *branch, char *name, int d, int s) {
   if (!branch)
     return false;
+  printf(">> [Check] Busy? %s at %s (%d, %d)\n", name, branch->name, d, s);
+  fflush(stdout);
+
   if (branch->type == SECTION_NODE) {
     if (branch->timetable->grid[d][s] &&
         strstr(branch->timetable->grid[d][s], name))
       return true;
   }
-  for (int i = 0; i < branch->child_count; i++)
+  for (int i = 0; i < branch->child_count; i++) {
+    if (i >= 20)
+      break; // Safety
     if (is_teacher_busy(branch->children[i], name, d, s))
       return true;
+  }
   return false;
 }
 
