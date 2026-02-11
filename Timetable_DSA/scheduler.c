@@ -33,7 +33,11 @@ bool solve_branch_timetable(TreeNode *root, Queue *pipeline,
   ScheduleRequest req = current->req;
 
   // Crucial: Find the branch node to access the Teacher Pool
+  if (root->child_count == 0 || root->children[0] == NULL)
+    return false;
   TreeNode *branch = root->children[0];
+  if (!branch->branch_info)
+    return false;
   BranchData *bd = branch->branch_info;
 
   // Define available slots (Skipping 2 and 5 for Breaks)

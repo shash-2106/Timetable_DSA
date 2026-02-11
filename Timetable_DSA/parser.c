@@ -140,11 +140,13 @@ void load_from_file(TreeNode *root, Queue *pipeline, const char *filename) {
     return;
   TreeNode *b = add_branch_to_college(root, name);
   printf(">> [Loader] Branch: %s\n", name);
+  fflush(stdout);
 
   // 2. Teachers
   if (fscanf(f, "%d", &t_count) != 1)
     return;
   printf(">> [Loader] Reading %d teachers...\n", t_count);
+  fflush(stdout);
 
   for (int i = 0; i < t_count; i++) {
     fscanf(f, "%99s", name);

@@ -9,6 +9,14 @@ app.use(cors());
 app.use(express.text()); // To parse text input
 app.use(express.json()); // To parse JSON bodies
 
+// Helper: On Linux (Render), increase stack size for recursive C solver
+const wrapCmd = (cmd) => {
+    if (process.platform !== 'win32' && process.platform !== 'darwin') {
+        return `ulimit -s unlimited 2>/dev/null; ${cmd}`;
+    }
+    return cmd;
+};
+
 // PATHS (Adjust if your folder names are different)
 const C_FOLDER = path.join(__dirname, '../Timetable_DSA');
 const REACT_PUBLIC = path.join(__dirname, '../scheduler-frontend/public');
@@ -58,7 +66,7 @@ app.post('/api/run-engine', (req, res) => {
     // Run C Engine
     console.log(`>> [Server] Executing: "${exePath}" config.txt (cwd: ${C_FOLDER})`);
     console.log(`>> [Server] Binary exists: ${fs.existsSync(exePath)}`);
-    exec(`"${exePath}" config.txt`, { cwd: C_FOLDER }, (error, stdout, stderr) => {
+    exec(wrapCmd(`"${exePath}" config.txt`), { cwd: C_FOLDER, shell: '/bin/sh' }, (error, stdout, stderr) => {
         if (error) {
             console.error(`   [x] Exec Error: ${error.message}`);
             console.error(`   [x] Exit Code: ${error.code}`);
@@ -119,7 +127,7 @@ app.post('/api/book-slot', async (req, res) => {
     // Note: We use existing config.txt. If that's not safe, we should save a temp one, but for now it's okay.
     const cmd = `"${exePath}" validate config.txt locked.txt "${branch}" "${sem}" "${section}" ${day} ${slot} "${subject}" "${type}" "${teacher}"`;
 
-    exec(cmd, { cwd: C_FOLDER }, (error, stdout, stderr) => {
+    exec(wrapCmd(cmd), { cwd: C_FOLDER, shell: '/bin/sh' }, (error, stdout, stderr) => {
         if (error) {
             // Exit codes 1, 2, 3 are handled here
             if (error.code === 1) return res.status(409).json({ success: false, error: "Slot is NOT FREE." });
@@ -181,7 +189,7 @@ app.post('/api/book-extra-slot', async (req, res) => {
     // Command: check_slot config.txt locked.txt <args...>
     const cmd = `"${exePath}" check_slot config.txt locked.txt "${branch}" "${sem}" "${section}" ${dayIndex} ${slot} "${subject}" "${type}" "${teacher}"`;
 
-    exec(cmd, { cwd: C_FOLDER }, (error, stdout, stderr) => {
+    exec(wrapCmd(cmd), { cwd: C_FOLDER, shell: '/bin/sh' }, (error, stdout, stderr) => {
         if (error) {
             if (error.code === 1) return res.status(409).json({ success: false, error: "Slot is NOT FREE in Master Schedule." });
             if (error.code === 2) return res.status(409).json({ success: false, error: `Teacher ${teacher} is BUSY in Master Schedule.` });
@@ -230,13 +238,13 @@ app.post('/api/swap-request', async (req, res) => {
     const checkB = `"${exePath}" check_availability config.txt locked.txt "${teacherB}" ${dayIndex} ${slotA}`;
 
     // Execute sequentially
-    exec(checkA, { cwd: C_FOLDER }, (err1, stdout1, stderr1) => {
+    exec(wrapCmd(checkA), { cwd: C_FOLDER, shell: '/bin/sh' }, (err1, stdout1, stderr1) => {
         if (err1 && err1.code !== 0) {
             const msg = err1.code === 2 ? "is BUSY elsewhere" : "cannot take the slot";
             return res.status(409).json({ error: `Swap Failed: ${teacherA} ${msg} at Slot ${slotB}.` });
         }
 
-        exec(checkB, { cwd: C_FOLDER }, (err2, stdout2, stderr2) => {
+        exec(wrapCmd(checkB), { cwd: C_FOLDER, shell: '/bin/sh' }, (err2, stdout2, stderr2) => {
             if (err2 && err2.code !== 0) {
                 const msg = err2.code === 2 ? "is BUSY elsewhere" : "cannot take the slot";
                 return res.status(409).json({ error: `Swap Failed: ${teacherB} ${msg} at Slot ${slotA}.` });
