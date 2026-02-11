@@ -258,6 +258,14 @@ void load_locks(TreeNode *root, const char *filename) {
       int d = atoi(s_day);
       int s = atoi(s_slot);
 
+      if (d < 0 || d >= MAX_DAYS || s < 0 || s >= MAX_SLOTS) {
+        printf(">> [Locks] SKIP invalid bounds: d=%d s=%d\n", d, s);
+        continue;
+      }
+      printf(">> [Locks] Processing lock: %s | %s | %s (d=%d, s=%d)\n", branch,
+             sem, sec, d, s);
+      fflush(stdout);
+
       // Unescape \n back to newline if needed, but our json_safe handles it.
       // Actually, we stored it as "\n" literal in file.
       // Simplification: We blindly strdup.
@@ -294,6 +302,7 @@ void prune_pipeline(TreeNode *root, Queue *pipeline) {
     return;
 
   printf(">> [Pruner] Optimizing request pipeline...\n");
+  fflush(stdout);
   int initial_count = 0;
   int removed_count = 0;
 
@@ -315,6 +324,11 @@ void prune_pipeline(TreeNode *root, Queue *pipeline) {
 
     // Count how many times this subject is ALREADY in the grid
     int scheduled_instances = 0;
+
+    // Debug print for pipeline item
+    printf(">> [Pruner] Req: %s (%s) for %s\n", req.course_code, req.type,
+           req.target_section->name);
+    fflush(stdout);
 
     // Scan the grid of the target section
     for (int d = 0; d < MAX_DAYS; d++) {
