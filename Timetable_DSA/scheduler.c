@@ -23,22 +23,11 @@ bool is_teacher_busy(TreeNode *branch, char *name, int d, int s) {
 
   if (branch->type == SECTION_NODE) {
     if (!branch->timetable) {
-      printf(">> [Check] ERR: Section %s has NULL timetable\n", branch->name);
-      fflush(stdout);
-      return false;
+      return false; // Safety
     }
-    if (branch->timetable) {
-      printf(">> [Check] Timetable ptr: %p\n", (void *)branch->timetable);
-      fflush(stdout);
-      char *cell = branch->timetable->grid[d][s];
-      printf(">> [Check] Grid ptr: %p\n", (void *)cell);
-      fflush(stdout);
-      if (cell && strstr(cell, name))
-        return true;
-    }
-    // if (branch->timetable->grid[d][s] &&
-    //     strstr(branch->timetable->grid[d][s], name))
-    //   return true;
+    char *cell = branch->timetable->grid[d][s];
+    if (cell && strstr(cell, name))
+      return true;
   }
   for (int i = 0; i < branch->child_count; i++) {
     if (i >= 20)
@@ -355,6 +344,7 @@ int validate_and_assign_temporary_slot(TreeNode *college_root,
     char entry[100];
     sprintf(entry, "%s (%s)\n%s", course_code, type, teacher_name);
     target_section->timetable->grid[day][s] = strdup(entry);
+    target_section->timetable->is_fixed[day][s] = true; // Mark as locked
   }
 
   return 0;

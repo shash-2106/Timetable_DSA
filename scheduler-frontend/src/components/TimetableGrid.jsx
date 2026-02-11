@@ -74,8 +74,17 @@ const TimetableGrid = ({ role, branch, semester, section, teacherQuery, onBack, 
           {gridData.map((row, dayIdx) => (
             <tr key={dayIdx}>
               <td className="day-col" style={{ padding: '15px', border: '1px solid #334155', background: '#1e293b', fontWeight: 'bold', color: '#60a5fa' }}>{days[dayIdx]}</td>
-              {row.map((cell, slotIdx) => {
-                let displayContent = cell;
+              {row.map((cellObj, slotIdx) => {
+                let displayContent;
+                let isFixed = false;
+
+                if (typeof cellObj === 'object' && cellObj !== null) {
+                  displayContent = cellObj.content;
+                  isFixed = cellObj.isFixed;
+                } else {
+                  displayContent = cellObj;
+                }
+
                 let bgStyle = { padding: '15px', border: '1px solid #334155', textAlign: 'center', color: '#e2e8f0', minWidth: '100px', position: 'relative' };
 
                 // --- OVERRIDE LOGIC ---
@@ -101,14 +110,21 @@ const TimetableGrid = ({ role, branch, semester, section, teacherQuery, onBack, 
                   bgStyle.fontStyle = 'italic';
                 } else if (displayContent !== "-" && !displayContent.includes("BREAK")) {
                   if (!bgStyle.background) {
-                    bgStyle.background = 'rgba(59, 130, 246, 0.15)';
-                    bgStyle.color = '#93c5fd';
+                    if (isFixed) {
+                      bgStyle.background = 'rgba(16, 185, 129, 0.15)';
+                      bgStyle.border = '1px solid #059669';
+                      bgStyle.color = '#6ee7b7';
+                    } else {
+                      bgStyle.background = 'rgba(59, 130, 246, 0.15)';
+                      bgStyle.color = '#93c5fd';
+                    }
                     bgStyle.fontWeight = '500';
                   }
                 }
 
                 return <td key={slotIdx} style={bgStyle}>
                   {displayContent}
+                  {isFixed && <span style={{ position: 'absolute', top: '2px', right: '2px', fontSize: '0.8rem' }}>🔒</span>}
                   {/* Badge for Override */}
                   {role === 'STUDENT' && getOverride(contextBranch, contextSem, contextSec, dayIdx, slotIdx) &&
                     <span style={{ position: 'absolute', top: '2px', right: '2px', fontSize: '0.7rem', background: '#f59e0b', color: 'black', padding: '2px 4px', borderRadius: '4px' }}>EXTRA</span>
@@ -192,7 +208,14 @@ const TimetableGrid = ({ role, branch, semester, section, teacherQuery, onBack, 
       if (node.type === 3 && node.grid) {
         // Section Node
         node.grid.forEach((dayRow, dayIndex) => {
-          dayRow.forEach((subject, slotIndex) => {
+          dayRow.forEach((cell, slotIndex) => {
+            let subject;
+            if (typeof cell === 'object' && cell !== null) {
+              subject = cell.content;
+            } else {
+              subject = cell;
+            }
+
             if (subject && subject !== "FREE" && !subject.includes("BREAK") && !subject.includes("LUNCH")) {
               const parts = subject.split('\n');
               const assignedTeacher = parts.length > 1 ? parts[1] : "";

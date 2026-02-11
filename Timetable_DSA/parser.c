@@ -244,16 +244,25 @@ void load_locks(TreeNode *root, const char *filename) {
     if (branch && sem && sec && s_day && s_slot && content) {
       // Navigate Tree
       TreeNode *b_node = find_child_by_name(root, branch, BRANCH_NODE);
-      if (!b_node)
+      if (!b_node) {
+        printf(">> [Locks] FAIL: Branch not found '%s'\n", branch);
         continue;
+      }
 
       TreeNode *sem_node = find_child_by_name(b_node, sem, SEMESTER_NODE);
-      if (!sem_node)
+      if (!sem_node) {
+        printf(">> [Locks] FAIL: Semester not found '%s' in '%s'\n", sem,
+               branch);
         continue;
+      }
 
       TreeNode *sec_node = find_child_by_name(sem_node, sec, SECTION_NODE);
-      if (!sec_node || !sec_node->timetable)
+      if (!sec_node || !sec_node->timetable) {
+        printf(">> [Locks] FAIL: Section not found '%s' in '%s' (or NULL "
+               "timetable)\n",
+               sec, sem);
         continue;
+      }
 
       int d = atoi(s_day);
       int s = atoi(s_slot);
@@ -290,6 +299,7 @@ void load_locks(TreeNode *root, const char *filename) {
       final_content[k] = '\0';
 
       sec_node->timetable->grid[d][s] = strdup(final_content);
+      sec_node->timetable->is_fixed[d][s] = true; // Mark as locked
       count++;
     }
   }

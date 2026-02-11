@@ -76,7 +76,9 @@ void write_node_json(TreeNode *node, FILE *f) {
     for (int d = 0; d < MAX_DAYS; d++) {
       fprintf(f, "[");
       for (int s = 0; s < MAX_SLOTS; s++) {
-        fprintf(f, "\"%s\"%s", json_safe(node->timetable->grid[d][s]),
+        fprintf(f, "{ \"content\": \"%s\", \"isFixed\": %s }%s",
+                json_safe(node->timetable->grid[d][s]),
+                node->timetable->is_fixed[d][s] ? "true" : "false",
                 (s == MAX_SLOTS - 1 ? "" : ","));
       }
       fprintf(f, "]%s", (d == MAX_DAYS - 1 ? "" : ","));

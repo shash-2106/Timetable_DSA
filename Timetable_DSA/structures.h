@@ -25,6 +25,7 @@ typedef struct {
 
 typedef struct {
   char *grid[MAX_DAYS][MAX_SLOTS];
+  bool is_fixed[MAX_DAYS][MAX_SLOTS]; // Track if slot was locked by user
 } SectionTimetable;
 
 typedef enum {

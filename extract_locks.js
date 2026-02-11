@@ -57,8 +57,25 @@ function extractLocks() {
 
             node.grid.forEach((row, d) => {
                 row.forEach((cell, s) => {
-                    if (cell && cell !== "FREE" && cell !== "BREAK" && cell !== "LUNCH" && cell !== "-") {
-                        const sanitizedContent = sanitizeForFile(cell);
+                    let content = cell;
+                    let isFixed = false;
+
+                    // Handle Object Format (New) vs String Format (Old)
+                    if (typeof cell === 'object' && cell !== null) {
+                        content = cell.content;
+                        isFixed = cell.isFixed;
+                    } else if (typeof cell === 'string') {
+                        // Backward compatibility: If it's a string and not FREE/BREAK, verify if it should be locked.
+                        // Ideally, we only lock if explicitly fixed. 
+                        // But if we are transitioning, maybe strict check is better?
+                        // Let's assume strings are NOT fixed unless we know otherwise, 
+                        // OR we can't determine. 
+                        // CORRECT LOGIC: Only lock if isFixed is explicitly true.
+                        isFixed = false;
+                    }
+
+                    if (isFixed && content && content !== "FREE" && content !== "BREAK" && content !== "LUNCH" && content !== "-") {
+                        const sanitizedContent = sanitizeForFile(content);
                         // Format: Branch|Semester|Section|Day|Slot|Content
                         locks.push(`${branch}|${semester}|${section}|${d}|${s}|${sanitizedContent}`);
                     }

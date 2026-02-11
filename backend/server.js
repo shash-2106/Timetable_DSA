@@ -53,14 +53,57 @@ app.post('/api/run-engine', (req, res) => {
     const exePath = path.join(C_FOLDER, exeName);
     console.log(">> [Server] Executing C Engine...");
 
-    // FRESH GENERATION: Write empty locked.txt so C engine starts clean
-    // Lock extraction is only needed for incremental bookings, not full generation.
+    // PERSISTENCE: Read existing data.json to extract locks
     try {
         const lockedPath = path.join(C_FOLDER, 'locked.txt');
-        fs.writeFileSync(lockedPath, "");
-        console.log("   [✓] Clean locked.txt written (fresh generation).");
+        const sourceJSON = path.join(C_FOLDER, 'data.json'); // Use C folder source
+        let lockContent = "";
+
+        if (fs.existsSync(sourceJSON)) {
+            const raw = fs.readFileSync(sourceJSON, 'utf8');
+            const data = JSON.parse(raw);
+
+            const extractLocks = (node, branch = "", sem = "") => {
+                let currentBranch = branch;
+                let currentSem = sem;
+
+                if (node.type === 1) currentBranch = node.name; // Branch
+                if (node.type === 2) currentSem = node.name;    // Semester
+
+                if (node.type === 3 && node.grid) { // Section
+                    node.grid.forEach((row, d) => {
+                        row.forEach((cell, s) => {
+                            // DEBUG: Log first few cells in each section
+                            if (d === 0 && s < 2) {
+                                console.log(`   [DEBUG] Cell [${d}][${s}] in ${node.name}:`, JSON.stringify(cell), "isFixed type:", typeof cell.isFixed);
+                            }
+
+                            if (cell && typeof cell === 'object' && cell.isFixed) {
+                                console.log(`   [DEBUG] Found Locked Slot: ${node.name} [${d}][${s}] -> ${cell.content}`);
+                                // Format: Branch|Sem|Sec|Day|Slot|Content
+                                // Escape newlines for file format
+                                const safeContent = cell.content.replace(/\n/g, "\\n");
+                                lockContent += `${currentBranch}|${currentSem}|${node.name}|${d}|${s}|${safeContent}\n`;
+                            }
+                        });
+                    });
+                }
+
+                if (node.children) {
+                    node.children.forEach(child => extractLocks(child, currentBranch, currentSem));
+                }
+            };
+
+            console.log(`   [DEBUG] Scanning data.json for locks...`);
+            extractLocks(data);
+            console.log(`   [DEBUG] Scan complete. Found ${lockContent.split('\n').filter(l => l).length} locks.`);
+        }
+
+        fs.writeFileSync(lockedPath, lockContent);
+        console.log(`   [✓] Locks preserved: ${lockContent.split('\n').filter(l => l).length} slots.`);
+
     } catch (e) {
-        console.error("Failed to write locked.txt:", e);
+        console.error("Failed to process locked.txt:", e);
     }
 
     // Run C Engine

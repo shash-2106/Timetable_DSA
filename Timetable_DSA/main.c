@@ -119,6 +119,39 @@ int main(int argc, char *argv[]) {
     printf(">> [System] load_from_file DONE\n");
     fflush(stdout);
 
+    // Validate Section Count
+    int total_sections = 0;
+    // Helper lambda-like block? No, usage of stack function.
+    // We can't define function here. We need simple traversal or separate
+    // function. Let's just traverse purely for validation. Actually, we can use
+    // a small helper function defined above main. But I can't add function
+    // definition easily with replace_file_content unless I replace main.c
+    // start. I'll implementation inline validation or use existing header
+    // helpers? No existing helper counts sections. I'll insert logic to
+    // traverse college_root->branches->semesters->sections.
+
+    // Simple verification
+    if (college_root && college_root->child_count > 0) {
+      for (int b = 0; b < college_root->child_count; b++) {
+        TreeNode *br = college_root->children[b];
+        for (int sm = 0; sm < br->child_count; sm++) {
+          TreeNode *sem = br->children[sm];
+          total_sections += sem->child_count;
+          for (int sc = 0; sc < sem->child_count; sc++) {
+            TreeNode *sec = sem->children[sc];
+            if (!sec->timetable) {
+              printf(">> [System] CRITICAL: Section %s has NULL timetable!\n",
+                     sec->name);
+              return 1;
+            }
+          }
+        }
+      }
+    }
+    printf(">> [System] Validated state: %d sections in memory.\n",
+           total_sections);
+    fflush(stdout);
+
     // NEW: Load existing locks and remove satisfied requests
     load_locks(college_root, "locked.txt");
     printf(">> [System] load_locks DONE\n");

@@ -14,7 +14,8 @@ function traverse(node, context = "") {
         const sectionName = `${context} - ${node.name}`;
 
         node.grid.forEach((row, dayIndex) => {
-            row.forEach((cell, slotIndex) => {
+            row.forEach((cellObj, slotIndex) => {
+                let cell = (typeof cellObj === 'object' && cellObj !== null) ? cellObj.content : cellObj;
                 // Ignore standard non-class markers
                 if (cell && !["FREE", "BREAK", "LUNCH", "-"].includes(cell)) {
 
