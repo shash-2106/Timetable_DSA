@@ -138,13 +138,17 @@ bool solve_branch_timetable(TreeNode *root, Queue *pipeline,
     fflush(stdout);
 
     /* ── 2b. Greedy placement pass ── */
+    printf(">> [Solver] pass start. Teacher count: %d\n", bd->teacher_count);
+    fflush(stdout);
+
     for (int r = 0; r < total && !failed; r++) {
       ScheduleRequest req = reqs[r];
       bool placed = false;
       bool is_lab = (strcasecmp(req.type, "Lab") == 0);
 
-      // printf(">> [Solver]   Processing Req %d/%d: %s (%s)\n", r+1, total,
-      // req.course_code, req.type); fflush(stdout);
+      printf(">> [Solver]   Processing Req %d/%d: %s (%s)\n", r + 1, total,
+             req.course_code, req.type);
+      fflush(stdout);
 
       /* Shuffle days per request for variety */
       int days[] = {0, 1, 2, 3, 4};
