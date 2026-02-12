@@ -1,2 +1,0 @@
-CS|Semester_1|Sec_A|0|0|PLC (Lecture)\nC3
-CS|Semester_1|Sec_A|0|1|Maths (Lecture)\nM1

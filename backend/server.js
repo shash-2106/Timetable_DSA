@@ -109,7 +109,10 @@ app.post('/api/run-engine', (req, res) => {
     // Run C Engine
     console.log(`>> [Server] Executing: "${exePath}" config.txt (cwd: ${C_FOLDER})`);
     console.log(`>> [Server] Binary exists: ${fs.existsSync(exePath)}`);
-    exec(wrapCmd(`"${exePath}" config.txt`), { cwd: C_FOLDER, shell: '/bin/sh' }, (error, stdout, stderr) => {
+    
+    // Use platform-appropriate shell (cmd.exe on Windows, /bin/sh on Unix)
+    const shellOption = process.platform === 'win32' ? true : '/bin/sh';
+    exec(wrapCmd(`"${exePath}" config.txt`), { cwd: C_FOLDER, shell: shellOption }, (error, stdout, stderr) => {
         if (error) {
             console.error(`   [x] Exec Error: ${error.message}`);
             console.error(`   [x] Exit Code: ${error.code}`);

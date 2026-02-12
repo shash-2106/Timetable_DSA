@@ -1,16 +1,1 @@
-[
-  {
-    "id": 1770838589749,
-    "date": "2026-02-19",
-    "branch": "CS",
-    "sem": "Semester_3",
-    "section": "Sec_C",
-    "day": 3,
-    "slot": 0,
-    "subject": "DBMS",
-    "type": "Lecture",
-    "teacher": "C3",
-    "requester": "C3",
-    "timestamp": "2026-02-11T19:36:29.749Z"
-  }
-]
+[]

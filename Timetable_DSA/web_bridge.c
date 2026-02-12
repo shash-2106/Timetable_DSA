@@ -1,4 +1,25 @@
 #include "structures.h"
+#include <ctype.h>
+
+// Windows uses _strnicmp instead of strncasecmp
+#ifdef _WIN32
+#define strncasecmp _strnicmp
+#endif
+
+// Portable case-insensitive substring search (strcasestr is not available on Windows)
+static char *portable_strcasestr(const char *haystack, const char *needle) {
+    if (!needle || !*needle) return (char *)haystack;
+    if (!haystack) return NULL;
+    
+    size_t needle_len = strlen(needle);
+    while (*haystack) {
+        if (strncasecmp(haystack, needle, needle_len) == 0) {
+            return (char *)haystack;
+        }
+        haystack++;
+    }
+    return NULL;
+}
 
 // Helper to handle NULL strings in JSON
 // Helper to handle NULL strings and escape special chars for JSON
@@ -40,8 +61,8 @@ void get_teacher_view(TreeNode *node, char *name, char *parent_name) {
       for (int s = 0; s < MAX_SLOTS; s++) {
         char *entry = node->timetable->grid[d][s];
 
-        // strcasestr is case-insensitive (finds 'a' in 'ADLD (A)')
-        if (entry != NULL && strcasestr(entry, name) != NULL) {
+        // Use portable case-insensitive search
+        if (entry != NULL && portable_strcasestr(entry, name) != NULL) {
           char *days[] = {"Mon", "Tue", "Wed", "Thu", "Fri"};
           printf("  >> [%s | %s] %s | Slot %d | %s\n", parent_name, node->name,
                  days[d], s + 1, entry);
